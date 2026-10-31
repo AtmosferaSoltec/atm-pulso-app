@@ -1,4 +1,4 @@
-import type { DocumentType, MemberStatus, PaymentMethod, Role } from "@/types";
+import type { MemberStatus, PaymentMethod, Role } from "@/types";
 
 const MONTHS = [
   "ene",
@@ -26,9 +26,33 @@ export function formatDate(date: string): string {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
-export function formatTime(timestamp: string): string {
-  const d = new Date(timestamp);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+/** "987654300" -> "987 654 300". */
+export function formatPhone(phone: string): string {
+  return phone.replace(/^(\d{3})(\d{3})(\d{3})$/, "$1 $2 $3");
+}
+
+/** Typing mask for dates: digits only, slashes added as you type (DD/MM/AAAA). */
+export function maskDate(input: string): string {
+  const d = input.replace(/\D/g, "").slice(0, 8);
+  return [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join("/");
+}
+
+/** "2026-10-30" -> "30/10/2026". */
+export function isoToDisplay(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+/** "30/10/2026" -> "2026-10-30", or null if it is not a real calendar date. */
+export function displayToIso(value: string): string | null {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (!match) return null;
+  const iso = `${match[3]}-${match[2]}-${match[1]}`;
+  const parsed = new Date(iso + "T00:00:00Z");
+  return !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === iso
+    ? iso
+    : null;
 }
 
 export function initials(name: string): string {
@@ -62,8 +86,6 @@ export const ROLE_LABEL: Record<Role, string> = {
   receptionist: "Recepcionista",
 };
 
-export const DOC_LABEL: Record<DocumentType, string> = { dni: "DNI", ce: "CE" };
-
 export function planLabel(months: number): string {
   return months === 1 ? "1 mes" : `${months} meses`;
 }
@@ -82,4 +104,32 @@ export function todayLima(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(
     new Date(),
   );
+}
+
+/** "2026-10-30" + n days. Plain calendar math, no timezone. */
+export function addDays(date: string, days: number): string {
+  const d = new Date(date + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Date the coverage ends. The API's `days_remaining` is the coverage rule (periods of every plan,
+ * chained); `ends_on` is the end of one period, so the date shown is derived from the days.
+ */
+export function coverageEnd(member: { days_remaining: number }): string {
+  return addDays(todayLima(), member.days_remaining);
+}
+
+export const METHODS: PaymentMethod[] = ["cash", "yape_plin", "card", "transfer"];
+
+/** "72.5" / 72.5 -> "72,5 kg". */
+export function formatKg(kg: number): string {
+  return `${kg.toLocaleString("es-PE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg`;
+}
+
+/** "2026-10-30T15:04:05Z" -> "30 oct" (Lima time). */
+export function formatShortDay(iso: string): string {
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(new Date(iso));
+  return formatDate(day).slice(0, -5);
 }

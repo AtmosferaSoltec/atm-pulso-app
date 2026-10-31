@@ -1,14 +1,28 @@
 import { addMonths, planLabel, todayLima } from "@/lib/format";
-import type { Branch, User } from "@/types";
-import type { MemberProfile, Scenario, SessionSnapshot } from "../types";
+import type {
+  Branch,
+  MemberDetail,
+  MembershipPlan,
+  Product,
+  User,
+} from "@/types";
+import type { Scenario, SessionSnapshot } from "../types";
 const gyms: User["gym"][] = [
   {
     id: "atlas",
     name: "Atlas Fitness",
     brand_color: "#246b55",
     logo_url: null,
+    // Atlas has the optional modules on; Titan has none (use it to check that nothing shows).
+    features: ["sales", "body_tracking"],
   },
-  { id: "titan", name: "Titan Studio", brand_color: "#7951ad", logo_url: null },
+  {
+    id: "titan",
+    name: "Titan Studio",
+    brand_color: "#7951ad",
+    logo_url: null,
+    features: [],
+  },
 ];
 const branches: Branch[] = [
   {
@@ -40,6 +54,30 @@ const branches: Branch[] = [
     gym_name: "Titan Studio",
   },
 ];
+const plan = (
+  id: string,
+  name: string,
+  position: number,
+  base: number,
+): MembershipPlan => ({
+  id,
+  name,
+  description: null,
+  is_active: true,
+  position,
+  prices: [1, 3, 6, 12].map((months) => ({
+    months,
+    amount: (base * months * (months === 1 ? 1 : 0.9)).toFixed(2),
+  })),
+});
+/** Atlas has one plan (no selector); Titan has two (selector shown). */
+const plans: Record<string, MembershipPlan[]> = {
+  atlas: [plan("atlas-plan", "Membresía", 0, 100)],
+  titan: [
+    plan("titan-plan-1", "Membresía", 0, 120),
+    plan("titan-plan-2", "Baile", 1, 80),
+  ],
+};
 export function session(scenario: Scenario, gymId = "atlas"): SessionSnapshot {
   const gym =
     gyms.find(
@@ -53,12 +91,15 @@ export function session(scenario: Scenario, gymId = "atlas"): SessionSnapshot {
       full_name: scenario === "gyms" ? "Diego Quispe" : "Lucía Fernández",
       phone: "987654321",
       role: scenario === "gyms" ? "receptionist" : "admin",
-      organization: { id: "group-1", name: "" },
       gym,
       branches: scenario === "branches" ? allowed : allowed.slice(0, 1),
     },
-    availableGyms: scenario === "gyms" ? gyms : [gyms[0]],
-    gymBranchCount: scenario === "single" ? 1 : allowed.length,
+    gyms: (scenario === "gyms" ? gyms : [gyms[0]]).map((g) => ({
+      id: g.id,
+      name: g.name,
+      current: g.id === gym.id,
+    })),
+    plans: plans[gym.id],
   };
 }
 function day(offset: number) {
@@ -79,7 +120,7 @@ const names = [
   "Renzo Gutiérrez Vera",
 ];
 const remaining = [60, 3, 120, 6, -12, -3, 90, 1, 33, 14];
-export function members(gymId: string, scenario: Scenario): MemberProfile[] {
+export function members(gymId: string, scenario: Scenario): MemberDetail[] {
   const scope = session(scenario, gymId);
   return names.map((name, i) => {
     const branch = scope.user.branches[i % scope.user.branches.length];
@@ -87,8 +128,11 @@ export function members(gymId: string, scenario: Scenario): MemberProfile[] {
     const months = i === 2 ? 6 : 3;
     const start = i === 6 ? day(10) : addMonths(day(days), -months);
     const end = i === 6 ? addMonths(start, months) : day(days);
+    const gymPlan = plans[gymId]?.[0] ?? plans.atlas[0];
     const sub = {
       id: `${gymId}-sub-${i}`,
+      plan_id: gymPlan.id,
+      plan_name: gymPlan.name,
       months,
       plan_label: planLabel(months),
       starts_on: start,
@@ -96,9 +140,10 @@ export function members(gymId: string, scenario: Scenario): MemberProfile[] {
       amount: gymId === "titan" ? "330.00" : "270.00",
       access_scope: "gym" as const,
       access_branches: [],
-      receipt: null,
-      method: (["yape_plin", "cash", "card", "transfer"] as const)[i % 4],
-      collection_branch: { id: branch.id, name: branch.name },
+      receipt: {
+        id: `${gymId}-receipt-${i}`,
+        number: `R-${String(i + 1).padStart(6, "0")}`,
+      },
     };
     return {
       id: `${gymId}-${i}`,
@@ -135,6 +180,7 @@ export function members(gymId: string, scenario: Scenario): MemberProfile[] {
               : "active",
       days_remaining: days,
       plan_label: sub.plan_label,
+      plan_names: [sub.plan_name],
       starts_on: start,
       ends_on: end,
       last_receipt: null,
@@ -145,9 +191,23 @@ export function members(gymId: string, scenario: Scenario): MemberProfile[] {
           id: sub.id + "-previous",
           starts_on: addMonths(start, -months),
           ends_on: start,
-          method: "cash",
+          receipt: null,
         },
       ],
     };
   });
 }
+
+export const products: Product[] = [
+  ["Batido", "8.00"],
+  ["Agua", "2.50"],
+  ["Gaseosa", "3.50"],
+  ["Barra de proteína", "6.00"],
+  ["Toalla", "15.00"],
+].map(([name, price], position) => ({
+  id: `product-${position}`,
+  name,
+  price,
+  is_active: true,
+  position,
+}));

@@ -53,30 +53,3 @@ export function useAsync<T>(
     refetch,
   };
 }
-
-/** For writes: `run` resolves with the result (or undefined on failure); `pending` and `error` are tracked. */
-export function useMutation<A extends unknown[], R>(
-  fn: (...args: A) => Promise<R>,
-) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<ApiError | undefined>();
-  const fnRef = useRef(fn);
-
-  useEffect(() => {
-    fnRef.current = fn;
-  });
-
-  const run = useCallback(async (...args: A): Promise<R | undefined> => {
-    setPending(true);
-    setError(undefined);
-    try {
-      return await fnRef.current(...args);
-    } catch (e) {
-      setError(e as ApiError);
-      return undefined;
-    } finally {
-      setPending(false);
-    }
-  }, []);
-  return { run, pending, error };
-}

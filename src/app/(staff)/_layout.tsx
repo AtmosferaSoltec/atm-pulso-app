@@ -7,24 +7,20 @@ export default function StaffLayout() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
+        headerTitleStyle: { fontFamily: "Manrope_700Bold", fontSize: 17 },
         headerShadowVisible: false,
         headerBackButtonDisplayMode: "minimal",
-        animation: "slide_from_right",
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="profile" options={{ title: "Perfil" }} />
+      <Stack.Screen name="members/[id]/index" options={{ title: "" }} />
       <Stack.Screen
-        name="members/[id]/index"
-        options={{ title: "Ficha del miembro" }}
+        name="members/[id]/subscription"
+        options={{ title: "Suscripción" }}
       />
-      <Stack.Screen
-        name="members/[id]/renew"
-        options={{ title: "Suscripción", presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="members/new"
-        options={{ title: "Nuevo miembro", presentation: "modal" }}
-      />
+      <Stack.Screen name="members/new" options={{ title: "Nuevo miembro" }} />
     </Stack>
   );
 }

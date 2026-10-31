@@ -1,5 +1,3 @@
-import { Platform } from "react-native";
-
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -9,22 +7,15 @@ export const spacing = {
   xxl: 32,
   xxxl: 48,
 } as const;
-export const radius = { sm: 8, md: 12, lg: 16, xl: 24, pill: 999 } as const;
+export const radius = { sm: 8, md: 10, lg: 14, pill: 999 } as const;
 
-export const fontFamily = Platform.select({
-  ios: "system-ui",
-  web: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-  default: "normal",
-}) as string;
-
+/** Compact scale: no display sizes. The largest text in the app is `title`. */
 export const typography = {
-  display: { fontSize: 36, lineHeight: 44, fontWeight: "700" },
-  title: { fontSize: 22, lineHeight: 28, fontWeight: "700" },
-  heading: { fontSize: 17, lineHeight: 24, fontWeight: "600" },
-  body: { fontSize: 15, lineHeight: 22, fontWeight: "400" },
+  title: { fontSize: 20, lineHeight: 26, fontWeight: "700" },
+  heading: { fontSize: 16, lineHeight: 22, fontWeight: "600" },
+  body: { fontSize: 15, lineHeight: 21, fontWeight: "400" },
   label: { fontSize: 14, lineHeight: 20, fontWeight: "600" },
-  caption: { fontSize: 12, lineHeight: 16, fontWeight: "500" },
-  mono: { fontSize: 15, lineHeight: 22, fontWeight: "600" },
+  caption: { fontSize: 13, lineHeight: 18, fontWeight: "500" },
 } as const;
 
 export type TypographyVariant = keyof typeof typography;

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { LinearGradient } from "expo-linear-gradient";
+import { View } from "react-native";
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -8,7 +8,6 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { ActivityIndicator, View } from "react-native";
 
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ApiError } from "@/types";
@@ -17,7 +16,8 @@ import { Button } from "./Button";
 import { Icon, type IconName } from "./Icon";
 import { Text } from "./Text";
 
-function Centered({
+/** Compact message block: small icon, one line of title, one of help. */
+function Message({
   icon,
   title,
   message,
@@ -28,26 +28,10 @@ function Centered({
   message?: string;
   action?: React.ReactNode;
 }) {
-  const { colors, spacing } = useTheme();
+  const { colors } = useTheme();
   return (
-    <View
-      style={{ alignItems: "center", gap: spacing.md, padding: spacing.xxl }}
-    >
-      <View
-        style={{
-          width: 88,
-          height: 88,
-          borderRadius: 28,
-          borderWidth: 1,
-          borderColor: colors.border,
-          transform: [{ rotate: "-8deg" }],
-          backgroundColor: colors.brandSoft,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Icon name={icon} size={28} color={colors.textMuted} />
-      </View>
+    <View style={{ alignItems: "center", gap: 6, paddingVertical: 32 }}>
+      <Icon name={icon} size={24} color={colors.textMuted} />
       <Text variant="heading" style={{ textAlign: "center" }}>
         {title}
       </Text>
@@ -56,13 +40,13 @@ function Centered({
           {message}
         </Text>
       ) : null}
-      {action}
+      {action ? <View style={{ marginTop: 8 }}>{action}</View> : null}
     </View>
   );
 }
 
 export function EmptyState({
-  icon = "file-tray-outline",
+  icon = "search-outline",
   title,
   message,
   actionLabel,
@@ -75,13 +59,18 @@ export function EmptyState({
   onAction?: () => void;
 }) {
   return (
-    <Centered
+    <Message
       icon={icon}
       title={title}
       message={message}
       action={
         actionLabel && onAction ? (
-          <Button title={actionLabel} onPress={onAction} fullWidth={false} />
+          <Button
+            title={actionLabel}
+            variant="secondary"
+            onPress={onAction}
+            fullWidth={false}
+          />
         ) : undefined
       }
     />
@@ -96,9 +85,9 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <Centered
+    <Message
       icon="cloud-offline-outline"
-      title="No pudimos cargar la información"
+      title="No se pudo cargar"
       message={error?.message ?? "Revisa tu conexión e inténtalo otra vez."}
       action={
         onRetry ? (
@@ -115,73 +104,53 @@ export function ErrorState({
   );
 }
 
-export function LoadingState({ label = "Cargando…" }: { label?: string }) {
-  const { colors, spacing } = useTheme();
-  return (
-    <View
-      style={{ alignItems: "center", gap: spacing.md, padding: spacing.xxl }}
-      accessibilityLiveRegion="polite"
-    >
-      <ActivityIndicator color={colors.brand} />
-      <Text tone="muted">{label}</Text>
-    </View>
-  );
-}
-
-/** Shimmer respects the system reduced-motion preference. */
-export function Skeleton({
-  height = 76,
-  style,
-}: {
-  height?: number;
-  style?: object;
-}) {
+/** Placeholder rows shaped like the real list rows; a soft pulse, none with reduced motion. */
+export function SkeletonList({ rows = 6 }: { rows?: number }) {
   const { colors } = useTheme();
   const reduce = useReducedMotion();
-  const x = useSharedValue(-160);
+  const opacity = useSharedValue(1);
   useEffect(() => {
     if (!reduce)
-      x.value = withRepeat(withTiming(420, { duration: 1300 }), -1, false);
-    return () => cancelAnimation(x);
-  }, [reduce, x]);
-  const animated = useAnimatedStyle(() => ({
-    transform: [{ translateX: x.value }],
-  }));
-  return (
+      opacity.set(withRepeat(withTiming(0.45, { duration: 700 }), -1, true));
+    return () => cancelAnimation(opacity);
+  }, [reduce, opacity]);
+  const pulse = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  const bar = (width: number | `${number}%`, height: number) => (
     <View
-      style={[
-        {
-          height,
-          borderRadius: 20,
-          backgroundColor: colors.surfaceAlt,
-          overflow: "hidden",
-        },
-        style,
-      ]}
-    >
-      <Animated.View
-        style={[
-          { position: "absolute", top: 0, bottom: 0, width: 160 },
-          animated,
-        ]}
-      >
-        <LinearGradient
-          colors={[colors.surfaceAlt, colors.surface, colors.surfaceAlt]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{ flex: 1 }}
-        />
-      </Animated.View>
-    </View>
+      style={{
+        width,
+        height,
+        borderRadius: 4,
+        backgroundColor: colors.surfaceAlt,
+      }}
+    />
   );
-}
-
-export function SkeletonList({ rows = 5 }: { rows?: number }) {
   return (
-    <View style={{ gap: 10, padding: 16 }} accessibilityLabel="Cargando">
+    <Animated.View style={pulse} accessibilityLabel="Cargando">
       {Array.from({ length: rows }, (_, i) => (
-        <Skeleton key={i} />
+        <View
+          key={i}
+          style={{
+            height: 60,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: colors.surfaceAlt,
+            }}
+          />
+          <View style={{ flex: 1, gap: 6 }}>
+            {bar("55%", 12)}
+            {bar("35%", 10)}
+          </View>
+        </View>
       ))}
-    </View>
+    </Animated.View>
   );
 }

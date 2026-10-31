@@ -10,6 +10,9 @@ import {
 } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
+import { View } from "react-native";
+
+import { ErrorState } from "@/components/ui";
 
 import { SessionProvider, useSession } from "@/state/session";
 import { ThemeProvider, useTheme } from "@/theme/ThemeProvider";
@@ -22,9 +25,22 @@ function Branded({ children }: { children: ReactNode }) {
 }
 
 function Navigator() {
-  const { user } = useSession();
+  const { user, booting, bootError, retryBoot } = useSession();
   const { scheme, colors } = useTheme();
   const base = scheme === "dark" ? DarkTheme : DefaultTheme;
+  if (booting || bootError)
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          justifyContent: "center",
+          padding: 24,
+        }}
+      >
+        {bootError && <ErrorState error={bootError} onRetry={retryBoot} />}
+      </View>
+    );
   return (
     <NavigationThemeProvider
       value={{

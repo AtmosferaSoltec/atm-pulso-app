@@ -28,7 +28,6 @@ export function Text({
       {...rest}
       style={[
         typography[variant],
-        variant === "mono" && { fontVariant: ["tabular-nums"] },
         {
           color,
           fontFamily:

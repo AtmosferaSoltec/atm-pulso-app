@@ -1,139 +1,102 @@
 import { useState } from "react";
 import { View } from "react-native";
+
 import {
   Avatar,
   BottomSheet,
   Button,
-  FilterChips,
+  Chips,
   Screen,
   Text,
 } from "@/components/ui";
-import { Identity } from "@/components/Identity";
+import { formatPhone, ROLE_LABEL } from "@/lib/format";
+import type { PreviewState, Scenario } from "@/services";
 import { useSession } from "@/state/session";
 import { useSchemePreference, useTheme } from "@/theme/ThemeProvider";
-import type { Scenario } from "@/services";
+
 export default function Profile() {
-  const {
-    user,
-    scenario,
-    setScenario,
-    pending,
-    signOut,
-    previewState,
-    setPreviewState,
-  } = useSession();
+  const { user, lab, setLab, pending, signOut, visibility } = useSession();
   const { preference, setPreference } = useSchemePreference();
-  const { colors } = useTheme();
+  const { colors, radius } = useTheme();
   const [logout, setLogout] = useState(false);
+  if (!user) return null;
   return (
-    <Screen topInset contentContainerStyle={{ padding: 24, gap: 28 }}>
-      <Identity />
-      <Text variant="display">Tu espacio.</Text>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-        <Avatar name={user?.full_name ?? ""} size={64} />
-        <View style={{ flex: 1, gap: 6 }}>
-          <Text variant="title">{user?.full_name}</Text>
+    <Screen contentContainerStyle={{ paddingTop: 4, gap: 20 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <Avatar name={user.full_name} size={48} />
+        <View style={{ flex: 1 }}>
+          <Text variant="heading">{user.full_name}</Text>
           <Text tone="muted">
-            {user?.role === "admin" ? "Administrador" : "Recepcionista"}
+            {ROLE_LABEL[user.role]}
+            {visibility.showGym ? ` · ${user.gym.name}` : ""}
           </Text>
-          <Text tone="muted">{user?.phone}</Text>
+          {user.phone && (
+            <Text variant="caption" tone="muted">
+              {formatPhone(user.phone)}
+            </Text>
+          )}
         </View>
       </View>
-      <View style={{ height: 1, backgroundColor: colors.border }} />
-      <Text variant="heading">A tu manera</Text>
-      <FilterChips
-        value={preference}
-        onChange={setPreference}
-        options={[
-          { value: "light", label: "Claro" },
-          { value: "dark", label: "Oscuro" },
-          { value: "system", label: "Sistema" },
-        ]}
-      />
+      <View style={{ gap: 6 }}>
+        <Text variant="label">Tema</Text>
+        <Chips
+          value={preference}
+          onChange={setPreference}
+          options={[
+            { value: "system", label: "Automático" },
+            { value: "light", label: "Claro" },
+            { value: "dark", label: "Oscuro" },
+          ]}
+        />
+      </View>
       <Button
         title="Cerrar sesión"
         icon="log-out-outline"
         variant="secondary"
         onPress={() => setLogout(true)}
       />
-      {__DEV__ && (
+      {__DEV__ && lab && (
         <View
           style={{
-            backgroundColor: colors.surfaceAlt,
-            padding: 20,
-            borderRadius: 24,
-            gap: 16,
+            gap: 10,
+            padding: 12,
+            borderRadius: radius.lg,
+            borderWidth: 1,
+            borderStyle: "dashed",
+            borderColor: colors.border,
           }}
         >
-          <Text variant="caption" tone="brand">
-            LABORATORIO DE DISEÑO
+          <Text variant="caption" tone="muted">
+            SOLO DESARROLLO · ESCENARIO DE LA MAQUETA
           </Text>
-          <Text variant="heading">Una app, distintos gimnasios</Text>
-          <Text tone="muted">Cambia el contexto de la maqueta.</Text>
-          {(
-            [
-              {
-                id: "single",
-                title: "01 · Un gimnasio, una sede",
-                detail: "Administrador · escenario inicial",
-              },
-              {
-                id: "branches",
-                title: "02 · Un gimnasio, varias sedes",
-                detail: "Administrador · selector de sede",
-              },
-              {
-                id: "gyms",
-                title: "03 · Varias marcas",
-                detail: "Recepcionista · una sede asignada por gym",
-              },
-            ] as const
-          ).map((item) => (
-            <View key={item.id} style={{ gap: 5 }}>
-              <Button
-                title={item.title}
-                variant={scenario === item.id ? "primary" : "secondary"}
-                disabled={pending}
-                icon={
-                  scenario === item.id ? "checkmark-circle" : "ellipse-outline"
-                }
-                onPress={() => void setScenario(item.id as Scenario)}
-              />
-              <Text variant="caption" tone="muted">
-                {item.detail}
-              </Text>
-            </View>
-          ))}
-          <Text variant="label">Estados del directorio</Text>
-          <FilterChips
-            value={previewState}
-            onChange={setPreviewState}
+          <Chips<Scenario>
+            value={lab?.scenario ?? "single"}
+            onChange={(next) => {
+              if (!pending) void setLab({ scenario: next });
+            }}
             options={[
-              { value: "ready", label: "Datos" },
+              { value: "single", label: "1 gym · 1 sede" },
+              { value: "branches", label: "1 gym · 2 sedes" },
+              { value: "gyms", label: "2 gyms" },
+            ]}
+          />
+          <Chips<PreviewState>
+            value={lab?.previewState ?? "ready"}
+            onChange={(next) => void setLab({ previewState: next })}
+            options={[
+              { value: "ready", label: "Con datos" },
               { value: "empty", label: "Vacío" },
               { value: "error", label: "Error" },
             ]}
           />
-          <Text variant="caption" tone="muted">
-            La carga con shimmer aparece al buscar o actualizar.
-          </Text>
         </View>
       )}
-      <Text variant="caption" tone="muted" style={{ textAlign: "center" }}>
-        PULSO · HECHO PARA ESTAR CERCA
-      </Text>
       <BottomSheet
         visible={logout}
         onClose={() => setLogout(false)}
-        title="¿Cerrar esta sesión?"
+        title="¿Cerrar sesión?"
       >
-        <Text tone="muted">Volverás a la pantalla de bienvenida.</Text>
-        <Button title="Cerrar sesión" onPress={signOut} />
-        <Button
-          title="Seguir aquí"
-          variant="ghost"
-          onPress={() => setLogout(false)}
-        />
+        <Button title="Cerrar sesión" variant="danger" onPress={signOut} />
       </BottomSheet>
     </Screen>
   );

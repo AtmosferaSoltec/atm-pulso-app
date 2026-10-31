@@ -11,8 +11,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useTheme } from "@/theme/ThemeProvider";
 
-import { Text } from "./Text";
-
 export interface ScreenProps extends Omit<ScrollViewProps, "children"> {
   children: ReactNode;
   /** Leave top inset to the navigation header (default true when a header is shown). */
@@ -71,26 +69,5 @@ export function Screen({
         <View style={[{ flex: 1 }, pad]}>{children}</View>
       )}
     </KeyboardAvoidingView>
-  );
-}
-
-export function SectionHeader({
-  title,
-  action,
-}: {
-  title: string;
-  action?: ReactNode;
-}) {
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}
-    >
-      <Text variant="heading">{title}</Text>
-      {action}
-    </View>
   );
 }

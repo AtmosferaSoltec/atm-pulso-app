@@ -13,6 +13,8 @@ export type DocumentType = "dni" | "ce";
 export type MemberStatus = "active" | "expiring" | "expired" | "scheduled";
 export type PaymentMethod = "yape_plin" | "cash" | "card" | "transfer";
 export type AccessScope = "branch" | "gym";
+/** Optional modules a gym switches on (closed list in the API). */
+export type GymFeature = "sales" | "body_tracking" | "kiosk";
 export interface Named {
   id: Uuid;
   name: string;
@@ -50,7 +52,17 @@ export interface Gym {
   day_pass_price: Money;
   day_pass_price_is_default: boolean;
   branch_sharing: boolean;
-  membership_prices: MembershipPrice[];
+  features: GymFeature[];
+}
+
+/** A sellable membership plan with its suggested prices (`GET /membership-plans`). */
+export interface MembershipPlan {
+  id: Uuid;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  position: number;
+  prices: MembershipPrice[];
 }
 
 export interface MembershipPrice {
@@ -64,15 +76,16 @@ export interface User {
   full_name: string;
   phone: string | null;
   role: Role;
-  organization: Named;
-  gym: { id: Uuid; name: string; brand_color: string; logo_url: string | null };
+  gym: {
+    id: Uuid;
+    name: string;
+    brand_color: string;
+    logo_url: string | null;
+    features: GymFeature[];
+  };
   branches: Branch[];
 }
 
-export interface Catalog {
-  organization: Named;
-  gyms: Gym[];
-}
 
 // ---- Members ----
 
@@ -96,6 +109,7 @@ export interface MemberView {
   status: MemberStatus;
   days_remaining: number;
   plan_label: string;
+  plan_names: string[];
   starts_on: DateString;
   ends_on: DateString;
   last_receipt: string | null;
@@ -103,6 +117,8 @@ export interface MemberView {
 
 export interface MembershipView {
   id: Uuid;
+  plan_id: Uuid;
+  plan_name: string;
   months: number;
   plan_label: string;
   starts_on: DateString;
@@ -143,6 +159,7 @@ export interface EnrollMember {
   document_number: string;
   full_name: string;
   phone: string;
+  plan_id?: Uuid;
   months: number;
   starts_on?: DateString;
   amount: Money;
@@ -154,6 +171,7 @@ export interface EnrollMember {
 export interface RenewMember {
   id?: Uuid;
   branch_id: Uuid;
+  plan_id?: Uuid;
   months: number;
   starts_on?: DateString;
   amount: Money;
@@ -168,9 +186,103 @@ export interface Sale {
   receipt: ReceiptRef;
 }
 
-/** Error shape of the API: { error: { code, message, details } }. */
+/** Error as the UI sees it: stable `code`, Spanish `message`. Mock and real adapters throw this shape. */
 export interface ApiError {
   code: string;
   message: string;
+  status?: number;
   details?: unknown;
+}
+
+/** `PATCH /members/{id}/memberships/{membership_id}`: send only what changed (the end date is computed by the server). */
+export interface PeriodChanges {
+  months?: number;
+  starts_on?: DateString;
+  amount?: Money;
+  method?: PaymentMethod;
+}
+
+// ---- Sales module (`sales`) ----
+
+export interface Product {
+  id: Uuid;
+  name: string;
+  price: Money;
+  is_active: boolean;
+  position: number;
+}
+
+export type ProductSaleStatus = "paid" | "pending";
+
+export interface ProductSale {
+  id: Uuid;
+  branch: Named;
+  status: ProductSaleStatus;
+  was_pending: boolean;
+  method: PaymentMethod | null;
+  total: Money;
+  units: number;
+  sold_at: Timestamp;
+  sold_on: DateString;
+  sold_by: { id: Uuid; full_name: string };
+  member: { id: Uuid; full_name: string; document_number: string } | null;
+  collection_id: Uuid | null;
+  collected_at: Timestamp | null;
+  items: {
+    product_id: Uuid;
+    name: string;
+    quantity: number;
+    unit_price: Money;
+    line_total: Money;
+  }[];
+}
+
+/** Prices are never sent: the server uses the catalog price. */
+export interface NewProductSale {
+  id?: Uuid;
+  branch_id: Uuid;
+  member_id?: Uuid;
+  status?: ProductSaleStatus;
+  method?: PaymentMethod;
+  items: { product_id: Uuid; quantity: number }[];
+}
+
+export interface MemberPending {
+  member_id: Uuid;
+  balance: Money;
+  pending_count: number;
+  sales: ProductSale[];
+}
+
+export interface NewCollection {
+  id?: Uuid;
+  member_id: Uuid;
+  branch_id: Uuid;
+  method: PaymentMethod;
+  sale_ids?: Uuid[];
+}
+
+export interface Collection {
+  id: Uuid;
+  amount: Money;
+  remaining_balance: Money;
+  method: PaymentMethod;
+  sale_ids: Uuid[];
+}
+
+// ---- Body tracking (`body_tracking`): sensitive data, never persisted or logged ----
+
+export interface BodyMeasurement {
+  id: Uuid;
+  member_id: Uuid;
+  measured_on: DateString;
+  weight_kg: number | null;
+  notes: string;
+}
+
+export interface NewMeasurement {
+  id?: Uuid;
+  measured_on?: DateString;
+  weight_kg?: number;
+  notes?: string;
 }

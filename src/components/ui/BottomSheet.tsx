@@ -78,9 +78,8 @@ export function BottomSheet({
           style={[
             {
               backgroundColor: colors.surface,
-              boxShadow: "0px -8px 32px rgba(0,0,0,0.12)",
-              borderTopLeftRadius: 30,
-              borderTopRightRadius: 30,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
               paddingBottom: insets.bottom + 16,
               maxHeight: "88%",
             },
@@ -90,7 +89,7 @@ export function BottomSheet({
           <View
             {...pan.panHandlers}
             style={{
-              height: 44,
+              height: 28,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -108,11 +107,11 @@ export function BottomSheet({
             style={{
               flexDirection: "row",
               alignItems: "center",
-              paddingHorizontal: 20,
+              paddingHorizontal: 16,
               gap: 8,
             }}
           >
-            <Text variant="title" style={{ flex: 1 }}>
+            <Text variant="heading" style={{ flex: 1 }}>
               {title}
             </Text>
             <Button
@@ -125,7 +124,7 @@ export function BottomSheet({
           </View>
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ padding: 24, gap: 16 }}
+            contentContainerStyle={{ padding: 16, gap: 12 }}
           >
             {children}
           </ScrollView>

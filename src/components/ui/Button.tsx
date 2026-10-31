@@ -15,16 +15,15 @@ import { Text } from "./Text";
 export interface ButtonProps extends Omit<PressableProps, "children"> {
   title: string;
   variant?: "primary" | "secondary" | "ghost" | "danger";
-  size?: "md" | "lg";
   icon?: IconName;
   loading?: boolean;
   fullWidth?: boolean;
 }
 
+/** One size (48 px): big enough for a thumb, never inflated. */
 export function Button({
   title,
   variant = "primary",
-  size = "md",
   icon,
   loading,
   fullWidth = true,
@@ -38,19 +37,20 @@ export function Button({
     primary: colors.brand,
     secondary: colors.surface,
     ghost: "transparent",
-    danger: colors.danger,
+    danger: "transparent",
   }[variant];
   const fg = {
     primary: colors.onBrand,
     secondary: colors.text,
     ghost: colors.brand,
-    danger: "#ffffff",
+    danger: colors.danger,
   }[variant];
   const off = disabled || loading;
   return (
     <Pressable
       onPress={(event) => {
-        void Haptics.selectionAsync().catch(() => {});
+        if (variant === "primary")
+          void Haptics.selectionAsync().catch(() => {});
         onPress?.(event);
       }}
       accessibilityRole="button"
@@ -62,10 +62,9 @@ export function Button({
         {
           backgroundColor: bg,
           borderRadius: radius.md,
-          minHeight: size === "lg" ? 56 : 48,
           borderWidth: variant === "secondary" ? 1 : 0,
           borderColor: colors.border,
-          opacity: off ? 0.5 : state.pressed ? 0.85 : 1,
+          opacity: off ? 0.5 : state.pressed ? 0.8 : 1,
           alignSelf: fullWidth ? "stretch" : "flex-start",
         },
         typeof style === "function" ? style(state) : style,
@@ -76,11 +75,8 @@ export function Button({
         <ActivityIndicator color={fg} />
       ) : (
         <View style={styles.row}>
-          {icon ? <Icon name={icon} size={20} color={fg} /> : null}
-          <Text
-            variant="label"
-            style={{ color: fg, fontSize: size === "lg" ? 16 : 15 }}
-          >
+          {icon ? <Icon name={icon} size={18} color={fg} /> : null}
+          <Text variant="label" style={{ color: fg, fontSize: 15 }}>
             {title}
           </Text>
         </View>
@@ -91,7 +87,8 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    paddingHorizontal: 20,
+    minHeight: 48,
+    paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
   },

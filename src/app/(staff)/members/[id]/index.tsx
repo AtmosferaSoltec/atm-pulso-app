@@ -1,12 +1,9 @@
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { Linking, Pressable, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
-import Animated, { LinearTransition } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import {
   Avatar,
-  BottomSheet,
   Button,
   ErrorState,
   Icon,
@@ -15,109 +12,105 @@ import {
   StatusChip,
   Text,
 } from "@/components/ui";
-import { Identity } from "@/components/Identity";
 import { useMember } from "@/hooks/queries";
+import {
+  daysLabel,
+  formatDate,
+  formatMoney,
+  formatPhone,
+  coverageEnd,
+  todayLima,
+} from "@/lib/format";
+import { services } from "@/services";
+import type { MemberDetail as Member, MembershipView } from "@/types";
 import { useSession } from "@/state/session";
 import { useTheme } from "@/theme/ThemeProvider";
-import { formatDate, formatMoney, METHOD_LABEL, todayLima } from "@/lib/format";
-import type { Subscription } from "@/services";
-function TimelineItem({
+
+function statusLine(member: Member) {
+  if (member.status === "scheduled")
+    return `Empieza el ${formatDate(member.starts_on)}`;
+  const verb = member.days_remaining < 0 ? "Venció el" : "Hasta el";
+  return `${daysLabel(member.days_remaining)} · ${verb} ${formatDate(coverageEnd(member))}`;
+}
+
+function SubscriptionRow({
   subscription,
   memberId,
-  first,
+  current,
 }: {
-  subscription: Subscription;
+  subscription: MembershipView;
   memberId: string;
-  first: boolean;
+  current: boolean;
 }) {
   const { colors } = useTheme();
-  const { visibility } = useSession();
-  const [expanded, setExpanded] = useState(first);
+  const { plans } = useSession();
+  // Only a period that has not ended can be corrected.
+  const editable =
+    services.capabilities.updatePeriod && subscription.ends_on >= todayLima();
+  const details = [
+    `${formatDate(subscription.starts_on)} – ${formatDate(subscription.ends_on)}`,
+    subscription.receipt?.number ?? null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <Animated.View
-      layout={LinearTransition.duration(220)}
-      style={{
-        borderLeftWidth: 2,
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${editable ? "Modificar suscripción" : "Suscripción"} de ${subscription.plan_label}, ${details}`}
+      disabled={!editable}
+      onPress={() =>
+        router.push({
+          pathname: "/members/[id]/subscription",
+          params: {
+            id: memberId,
+            mode: "edit",
+            subscriptionId: subscription.id,
+          },
+        })
+      }
+      style={({ pressed }) => ({
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        minHeight: 60,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
         borderColor: colors.border,
-        paddingLeft: 22,
-        paddingBottom: 24,
-        marginLeft: 7,
-      }}
+        opacity: pressed ? 0.6 : 1,
+      })}
     >
-      <View
-        style={{
-          position: "absolute",
-          left: -7,
-          top: 16,
-          width: 12,
-          height: 12,
-          borderRadius: 6,
-          backgroundColor: first ? colors.brand : colors.border,
-          borderWidth: 2,
-          borderColor: colors.background,
-        }}
-      />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        onPress={() => setExpanded(!expanded)}
-        style={{
-          minHeight: 52,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1, gap: 5 }}>
-          <Text variant="heading">{subscription.plan_label}</Text>
-          <Text variant="caption" tone="muted">
-            {formatDate(subscription.starts_on)} →{" "}
-            {formatDate(subscription.ends_on)}
-          </Text>
-        </View>
-        <Icon name={expanded ? "chevron-up" : "chevron-down"} size={18} />
-      </Pressable>
-      {expanded && (
-        <View style={{ gap: 12, paddingTop: 12 }}>
-          <Text variant="title">{formatMoney(subscription.amount)}</Text>
-          <Text tone="muted">{METHOD_LABEL[subscription.method]}</Text>
-          {visibility.hasMultipleBranches && (
-            <Text tone="muted">
-              Sede de cobro · {subscription.collection_branch.name}
+      <View style={{ flex: 1, gap: 1 }}>
+        <Text variant="label" style={{ fontSize: 15 }}>
+          {plans.length > 1 ? `${subscription.plan_name} · ` : ""}
+          {subscription.plan_label} · {formatMoney(subscription.amount)}
+          {current ? (
+            <Text variant="caption" tone="brand">
+              {"  "}Actual
             </Text>
-          )}
-          <Button
-            title="Modificar suscripción"
-            icon="create-outline"
-            variant="ghost"
-            onPress={() =>
-              router.push({
-                pathname: "/members/[id]/renew",
-                params: {
-                  id: memberId,
-                  mode: "edit",
-                  subscriptionId: subscription.id,
-                },
-              })
-            }
-          />
-        </View>
+          ) : null}
+        </Text>
+        <Text variant="caption" tone="muted" numberOfLines={2}>
+          {details}
+        </Text>
+      </View>
+      {editable && (
+        <Icon name="create-outline" size={18} color={colors.textMuted} />
       )}
-    </Animated.View>
+    </Pressable>
   );
 }
+
 export default function MemberDetail() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const result = useMember(id);
   const { colors } = useTheme();
   const { visibility } = useSession();
-  const [contact, setContact] = useState(false);
+  const today = todayLima();
   if (result.loading)
     return (
       <Screen>
-        <SkeletonList />
+        <SkeletonList rows={4} />
       </Screen>
     );
   if (result.error || !result.data)
@@ -127,207 +120,93 @@ export default function MemberDetail() {
       </Screen>
     );
   const member = result.data;
-  const start = Date.parse(member.starts_on);
-  const end = Date.parse(member.ends_on);
-  const progress = Math.max(
-    0,
-    Math.min(1, (Date.parse(todayLima()) - start) / (end - start)),
-  );
-  const ring = {
-    active: colors.success,
-    expiring: colors.warning,
-    expired: colors.danger,
-    scheduled: colors.info,
-  }[member.status];
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Screen
         onRefresh={result.refetch}
-        refreshing={result.loading}
-        contentContainerStyle={{ padding: 24, gap: 26 }}
+        refreshing={false}
+        contentContainerStyle={{ paddingTop: 4, gap: 20 }}
       >
-        <Identity compact />
-        <View style={{ alignItems: "center", gap: 12, paddingTop: 8 }}>
-          <View
-            style={{
-              padding: 5,
-              borderRadius: 60,
-              borderWidth: 2,
-              borderColor: ring,
-            }}
-          >
-            <Avatar name={member.full_name} size={80} />
+        <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+          <Avatar name={member.full_name} size={48} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="title">{member.full_name}</Text>
+            <Text tone="muted">
+              {member.document_type.toUpperCase()} {member.document_number} ·{" "}
+              {formatPhone(member.phone)}
+            </Text>
           </View>
-          <Text
-            variant="display"
-            style={{ textAlign: "center", fontSize: 29, lineHeight: 37 }}
-          >
-            {member.full_name}
-          </Text>
-          <View>
+        </View>
+        <View style={{ gap: 6 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <StatusChip status={member.status} />
+            <Text variant="label" style={{ flex: 1 }}>
+              {statusLine(member)}
+            </Text>
           </View>
-          <Text tone="muted">
-            {member.document_type.toUpperCase()} {member.document_number} ·{" "}
-            {member.phone}
-          </Text>
-          {visibility.hasMultipleBranches && (
-            <Text tone="muted">Inscripción · {member.home_branch.name}</Text>
+          {visibility.showBranch && (
+            <Text variant="caption" tone="muted">
+              Sede {member.home_branch.name}
+            </Text>
           )}
         </View>
-        <LinearGradient
-          colors={[colors.brandSoft, colors.surface]}
-          style={{
-            padding: 24,
-            borderRadius: 28,
-            boxShadow: "0px 6px 20px rgba(0,0,0,0.04)",
-            gap: 14,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}
-        >
-          <Text variant="caption" tone="brand">
-            {member.status === "scheduled"
-              ? "PRÓXIMA SUSCRIPCIÓN"
-              : "SU TIEMPO EN MOVIMIENTO"}
-          </Text>
-          <View
-            style={{ flexDirection: "row", alignItems: "baseline", gap: 12 }}
-          >
-            <Text
-              style={{
-                fontFamily: "Manrope_700Bold",
-                fontSize: 72,
-                lineHeight: 86,
-                letterSpacing: -4,
-                color: colors.onBrandSoft,
-              }}
-            >
-              {member.status === "scheduled"
-                ? "→"
-                : Math.abs(member.days_remaining)}
-            </Text>
-            <Text tone="muted" style={{ flex: 1 }}>
-              {member.status === "expired"
-                ? "días desde el vencimiento"
-                : member.status === "scheduled"
-                  ? "Inicio " + formatDate(member.starts_on)
-                  : "días restantes"}
-            </Text>
-          </View>
-          <View
-            accessibilityRole="progressbar"
-            accessibilityValue={{
-              min: 0,
-              max: 100,
-              now: Math.round(progress * 100),
-            }}
-            style={{
-              height: 6,
-              borderRadius: 6,
-              backgroundColor: colors.border,
-              overflow: "hidden",
-            }}
-          >
-            <View
-              style={{
-                height: 6,
-                width: `${progress * 100}%`,
-                backgroundColor: colors.brand,
-                borderRadius: 6,
-              }}
-            />
-          </View>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <Text variant="caption" tone="muted">
-              {formatDate(member.starts_on)}
-            </Text>
-            <Text variant="caption" tone="muted">
-              {formatDate(member.ends_on)}
-            </Text>
-          </View>
-        </LinearGradient>
-        <View style={{ flexDirection: "row", gap: 10 }}>
+        <View style={{ flexDirection: "row", gap: 8 }}>
           <Button
             title="Llamar"
             icon="call-outline"
             variant="secondary"
+            fullWidth={false}
             style={{ flex: 1 }}
-            onPress={() => setContact(true)}
+            onPress={() => void Linking.openURL(`tel:${member.phone}`)}
           />
           <Button
             title="WhatsApp"
             icon="logo-whatsapp"
             variant="secondary"
+            fullWidth={false}
             style={{ flex: 1 }}
-            onPress={() => setContact(true)}
+            onPress={() =>
+              void Linking.openURL(`https://wa.me/51${member.phone}`)
+            }
           />
         </View>
         <View>
-          <Text variant="title" style={{ marginBottom: 18 }}>
-            Su historia, mes a mes
+          <Text variant="caption" tone="muted" style={{ marginBottom: 2 }}>
+            SUSCRIPCIONES
           </Text>
-          {member.memberships.map((subscription, index) => (
-            <TimelineItem
+          {member.memberships.map((subscription) => (
+            <SubscriptionRow
               key={subscription.id}
               subscription={subscription}
               memberId={id}
-              first={index === 0}
+              current={
+                subscription.starts_on <= today && today <= subscription.ends_on
+              }
             />
           ))}
         </View>
       </Screen>
       <View
         style={{
-          padding: 20,
-          paddingBottom: Math.max(insets.bottom, 20),
-          gap: 4,
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: Math.max(insets.bottom, 12),
           borderTopWidth: 1,
           borderColor: colors.border,
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
         }}
       >
         <Button
-          title="Renovar suscripción"
-          icon="refresh-outline"
-          size="lg"
+          title="Renovar"
+          icon="refresh"
           onPress={() =>
             router.push({
-              pathname: "/members/[id]/renew",
+              pathname: "/members/[id]/subscription",
               params: { id, mode: "renew" },
             })
           }
         />
-        <Button
-          title="Nueva suscripción"
-          icon="add"
-          variant="ghost"
-          onPress={() =>
-            router.push({
-              pathname: "/members/[id]/renew",
-              params: { id, mode: "new" },
-            })
-          }
-        />
       </View>
-      <BottomSheet
-        visible={contact}
-        onClose={() => setContact(false)}
-        title="Contacto del miembro"
-      >
-        <Text>{member.full_name}</Text>
-        <Text variant="title">{member.phone}</Text>
-        <Text tone="muted">
-          Vista de diseño. No se iniciará una llamada ni se enviará un mensaje.
-        </Text>
-        <Button title="Entendido" onPress={() => setContact(false)} />
-      </BottomSheet>
     </View>
   );
 }

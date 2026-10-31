@@ -1,8 +1,11 @@
 import { useLocalSearchParams } from "expo-router";
-import { SubscriptionEditor } from "@/components/SubscriptionEditor";
+
+import { SubscriptionForm } from "@/components/SubscriptionForm";
 import { ErrorState, Screen, SkeletonList } from "@/components/ui";
 import { useMember } from "@/hooks/queries";
-export default function Subscription() {
+
+/** Renew (default) or modify an existing subscription (`mode=edit`). */
+export default function SubscriptionScreen() {
   const { id, mode, subscriptionId } = useLocalSearchParams<{
     id: string;
     mode?: string;
@@ -12,7 +15,7 @@ export default function Subscription() {
   if (result.loading)
     return (
       <Screen>
-        <SkeletonList />
+        <SkeletonList rows={4} />
       </Screen>
     );
   if (result.error || !result.data)
@@ -21,15 +24,9 @@ export default function Subscription() {
         <ErrorState error={result.error} onRetry={result.refetch} />
       </Screen>
     );
-  return (
-    <SubscriptionEditor
-      member={result.data}
-      mode={mode ?? "renew"}
-      subscription={
-        mode === "edit"
-          ? result.data.memberships.find((s) => s.id === subscriptionId)
-          : undefined
-      }
-    />
-  );
+  const subscription =
+    mode === "edit"
+      ? result.data.memberships.find((s) => s.id === subscriptionId)
+      : undefined;
+  return <SubscriptionForm member={result.data} subscription={subscription} />;
 }
