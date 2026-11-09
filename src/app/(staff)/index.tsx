@@ -14,6 +14,7 @@ import {
   SkeletonList,
   Text,
 } from "@/components/ui";
+import { useSession } from "@/state/session";
 import { useMembers } from "@/hooks/queries";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { MemberStatus } from "@/types";
@@ -24,6 +25,7 @@ type Filter = MemberStatus | "all";
 export default function Members() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { hasFeature } = useSession();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const searching = search.trim().length > 0;
@@ -119,7 +121,9 @@ export default function Members() {
         data={result.error || result.loading ? [] : result.items}
         onEndReached={result.loadMore}
         onEndReachedThreshold={0.4}
-        ListFooterComponent={result.loadingMore ? <SkeletonList rows={2} /> : undefined}
+        ListFooterComponent={
+          result.loadingMore ? <SkeletonList rows={2} /> : undefined
+        }
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <MemberRow member={item} />}
         ListHeaderComponent={header}
@@ -132,30 +136,63 @@ export default function Members() {
         refreshing={false}
         onRefresh={result.refetch}
       />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Nuevo miembro"
-        onPress={() => router.push("/members/new")}
-        style={({ pressed }) => ({
+      <View
+        pointerEvents="box-none"
+        style={{
           position: "absolute",
           right: 16,
           bottom: insets.bottom + 16,
-          height: 52,
-          paddingHorizontal: 20,
-          borderRadius: 26,
           flexDirection: "row",
-          alignItems: "center",
-          gap: 6,
-          backgroundColor: colors.brand,
-          boxShadow: "0px 2px 8px rgba(0,0,0,0.18)",
-          opacity: pressed ? 0.85 : 1,
-        })}
+          gap: 8,
+        }}
       >
-        <Icon name="add" size={22} color={colors.onBrand} />
-        <Text variant="label" style={{ color: colors.onBrand, fontSize: 15 }}>
-          Nuevo
-        </Text>
-      </Pressable>
+        {hasFeature("sales") && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Venta rápida"
+            onPress={() => router.push("/sale")}
+            style={({ pressed }) => ({
+              height: 52,
+              paddingHorizontal: 18,
+              borderRadius: 26,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: colors.border,
+              boxShadow: "0px 2px 8px rgba(0,0,0,0.12)",
+              opacity: pressed ? 0.85 : 1,
+            })}
+          >
+            <Icon name="cart-outline" size={20} color={colors.text} />
+            <Text variant="label" style={{ fontSize: 15 }}>
+              Vender
+            </Text>
+          </Pressable>
+        )}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Nuevo miembro"
+          onPress={() => router.push("/members/new")}
+          style={({ pressed }) => ({
+            height: 52,
+            paddingHorizontal: 20,
+            borderRadius: 26,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+            backgroundColor: colors.brand,
+            boxShadow: "0px 2px 8px rgba(0,0,0,0.18)",
+            opacity: pressed ? 0.85 : 1,
+          })}
+        >
+          <Icon name="add" size={22} color={colors.onBrand} />
+          <Text variant="label" style={{ color: colors.onBrand, fontSize: 15 }}>
+            Nuevo
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

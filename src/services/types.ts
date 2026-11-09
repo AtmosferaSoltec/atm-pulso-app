@@ -38,8 +38,13 @@ export interface AuthService {
   /** True when a stored session exists (it is verified by `session.load`). */
   restore(): Promise<boolean>;
   /** Throws `PASSWORD_CHANGE_REQUIRED` when the first password must be replaced. */
-  signIn(dni: string, password: string): Promise<void>;
-  changePassword(dni: string, current: string, next: string): Promise<void>;
+  /** `documentNumber` is the number of a DNI, a CE or a passport. */
+  signIn(documentNumber: string, password: string): Promise<void>;
+  changePassword(
+    documentNumber: string,
+    current: string,
+    next: string,
+  ): Promise<void>;
   signOut(): Promise<void>;
   /** Called when the session can no longer be renewed (refresh failed). Returns the unsubscribe function. */
   onExpired(listener: () => void): () => void;

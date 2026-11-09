@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "production": {
+      "distribution": "store",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_MODE": "real",
+        "EXPO_PUBLIC_PULSO_API_URL": "https://pulso-api.atmosferast.com/api/v1",
+        "EXPO_PUBLIC_AUTH_API_URL": "https://auth.atmosferast.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

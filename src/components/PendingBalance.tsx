@@ -105,7 +105,7 @@ export function PendingBalance({ memberId }: { memberId: string }) {
           }}
         >
           <View
-            style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 56 }}
+            style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 56, paddingVertical: 4 }}
           >
             <Text variant="title" style={{ flex: 1 }}>
               {formatMoney(data.balance)}

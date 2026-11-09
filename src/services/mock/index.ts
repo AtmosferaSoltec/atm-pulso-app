@@ -169,10 +169,10 @@ export const mockServices: Services = {
   lab,
   auth: {
     restore: async () => labState.signedIn,
-    signIn: (dni, password) =>
+    signIn: (documentNumber, password) =>
       delay(() => {
-        if (!dni || !password)
-          fail("INVALID_CREDENTIALS", "DNI o contraseña incorrectos.");
+        if (!documentNumber || !password)
+          fail("INVALID_CREDENTIALS", "Documento o contraseña incorrectos.");
         labState.signedIn = true;
       }),
     changePassword: () => delay(() => undefined),

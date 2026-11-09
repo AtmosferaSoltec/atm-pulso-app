@@ -95,12 +95,12 @@ function useSessionState() {
     /** Optional modules of the current gym. */
     hasFeature: (feature: GymFeature) =>
       user?.gym.features.includes(feature) ?? false,
-    async signIn(dni: string, password: string) {
+    async signIn(documentNumber: string, password: string) {
       setPending(true);
       setNotice(undefined);
       signedOutByUser.current = false;
       try {
-        await services.auth.signIn(dni, password);
+        await services.auth.signIn(documentNumber, password);
         try {
           apply(await services.session.load());
         } catch (e) {
@@ -111,10 +111,14 @@ function useSessionState() {
         setPending(false);
       }
     },
-    async changePassword(dni: string, current: string, next: string) {
+    async changePassword(
+      documentNumber: string,
+      current: string,
+      next: string,
+    ) {
       setPending(true);
       try {
-        await services.auth.changePassword(dni, current, next);
+        await services.auth.changePassword(documentNumber, current, next);
       } finally {
         setPending(false);
       }

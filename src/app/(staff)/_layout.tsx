@@ -20,6 +20,7 @@ export default function StaffLayout() {
         name="members/[id]/subscription"
         options={{ title: "Suscripción" }}
       />
+      <Stack.Screen name="sale" options={{ title: "Venta rápida" }} />
       <Stack.Screen name="members/new" options={{ title: "Nuevo miembro" }} />
     </Stack>
   );

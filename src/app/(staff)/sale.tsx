@@ -83,7 +83,10 @@ export default function SaleScreen() {
     setSaving(true);
     setFailure(undefined);
     try {
-      const sale = await services.sales.sell({ ...body, id: attempt.current.id });
+      const sale = await services.sales.sell({
+        ...body,
+        id: attempt.current.id,
+      });
       if (status === "paid") rememberMethod(method);
       setDone(
         status === "paid"
@@ -148,32 +151,60 @@ export default function SaleScreen() {
         <View>
           {list.map((p) => {
             const qty = cart[p.id] ?? 0;
-            return (
+            const plus = (
               <Pressable
-                key={p.id}
                 accessibilityRole="button"
                 accessibilityLabel={`Agregar ${p.name}, ${formatMoney(p.price)}${qty ? `, ${qty} en la venta` : ""}`}
                 onPress={() => change(p.id, 1)}
-                style={({ pressed }) => ({
+                style={{
+                  width: 48,
+                  height: 48,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icon
+                  name={qty > 0 ? "add-circle" : "add-circle-outline"}
+                  size={26}
+                  color={colors.brand}
+                />
+              </Pressable>
+            );
+            return (
+              <View
+                key={p.id}
+                style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  gap: 8,
                   minHeight: 56,
                   borderBottomWidth: 1,
                   borderColor: colors.border,
-                  opacity: pressed ? 0.6 : 1,
-                })}
+                }}
               >
-                <View style={{ flex: 1 }}>
-                  <Text variant="label" style={{ fontSize: 15 }} numberOfLines={1}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Sumar uno de ${p.name}`}
+                  onPress={() => change(p.id, 1)}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minHeight: 56,
+                    justifyContent: "center",
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    variant="label"
+                    style={{ fontSize: 15 }}
+                    numberOfLines={1}
+                  >
                     {p.name}
                   </Text>
                   <Text variant="caption" tone="muted">
                     {formatMoney(p.price)}
                   </Text>
-                </View>
-                {qty > 0 ? (
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                </Pressable>
+                {qty > 0 && (
+                  <>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Quitar uno de ${p.name}`}
@@ -185,7 +216,11 @@ export default function SaleScreen() {
                         justifyContent: "center",
                       }}
                     >
-                      <Icon name="remove-circle-outline" size={26} color={colors.textMuted} />
+                      <Icon
+                        name="remove-circle-outline"
+                        size={26}
+                        color={colors.textMuted}
+                      />
                     </Pressable>
                     <Text
                       variant="heading"
@@ -193,20 +228,10 @@ export default function SaleScreen() {
                     >
                       {qty}
                     </Text>
-                    <View
-                      style={{ width: 48, height: 48, alignItems: "center", justifyContent: "center" }}
-                    >
-                      <Icon name="add-circle" size={26} color={colors.brand} />
-                    </View>
-                  </View>
-                ) : (
-                  <View
-                    style={{ width: 48, height: 48, alignItems: "center", justifyContent: "center" }}
-                  >
-                    <Icon name="add-circle-outline" size={26} color={colors.brand} />
-                  </View>
+                  </>
                 )}
-              </Pressable>
+                {plus}
+              </View>
             );
           })}
         </View>
@@ -233,7 +258,11 @@ export default function SaleScreen() {
             {formatMoney(total)}
           </Text>
           <Text tone="muted">
-            {units === 0 ? "Sin productos" : units === 1 ? "1 unidad" : `${units} unidades`}
+            {units === 0
+              ? "Sin productos"
+              : units === 1
+                ? "1 unidad"
+                : `${units} unidades`}
           </Text>
         </View>
         <View style={{ flexDirection: "row", gap: 8 }}>

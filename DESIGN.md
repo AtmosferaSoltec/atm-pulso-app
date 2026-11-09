@@ -10,6 +10,7 @@ Maqueta móvil interna para el personal del gimnasio (roles `admin` y `reception
 | Miembros (inicio) | `(staff)/index` | Buscar por nombre/DNI/CE, filtrar, abrir ficha. Botón flotante **Nuevo** |
 | Ficha | `(staff)/members/[id]` | **Renovar** (barra inferior), **Llamar** (`tel:`) y **WhatsApp** (`https://wa.me/51…`). Tocar un periodo vigente lo corrige |
 | Renovar / Modificar | `(staff)/members/[id]/subscription` | Renovar, o `mode=edit` para corregir un periodo que no terminó |
+| Venta rápida (módulo `sales`) | `(staff)/sale` | Tocar productos suma 1; **Cobrar** (elige método) o **Dejar pendiente** (requiere miembro). Se abre con el botón **Vender**, junto a «Nuevo» |
 | Nuevo miembro | `(staff)/members/new` | Datos del miembro + primera suscripción, en una sola pantalla |
 | Perfil | `(staff)/profile` | Tema y cerrar sesión (y laboratorio de escenarios en `__DEV__`) |
 
@@ -102,11 +103,18 @@ Un valor del entorno gana sobre `.env`: `EXPO_PUBLIC_API_MODE=mock npx expo star
 - **Documento repetido** (`409 MEMBER_DOCUMENT_TAKEN`): botón «Abrir su ficha».
 - La fecha de fin de cobertura que muestra la ficha se calcula con `days_remaining` (regla de cobertura del servidor); `ends_on` de `MemberView` es el de un solo periodo.
 - **Gimnasio**: `/v1/session/tenants` define `visibility.showGym` (más de uno). **Sede**: `user.branches` de `/me` (admin: todas; recepcionista: las asignadas) define `showBranch`. La lista de miembros es del gimnasio completo; la sede solo se usa como sede de cobro.
-- **Módulos**: `user.gym.features` (`useSession().hasFeature("products")`) está listo para ocultar lo opcional. La app no tiene todavía pantallas de módulos.
+
+### Módulos opcionales (`sales`, `body_tracking`)
+
+**Regla: si el gimnasio no tiene el módulo (`user.gym.features`, vía `useSession().hasFeature`), la app no muestra nada de él** (ni botón, ni bloque, ni llamadas). Con `FEATURE_DISABLED` el API responde 403, así que tampoco se consulta «por si acaso».
+
+- **Venta rápida** (`sales`): botón «Vender» en la lista (junto a «Nuevo») → lista compacta de productos activos (`GET /products`) con precio, tocar suma 1 y «−» resta (1–99). Total fijo abajo. Miembro opcional (hoja de búsqueda por nombre o documento). «Cobrar» abre una hoja con el método (efectivo, Yape/Plin, tarjeta, transferencia; recuerda el último en memoria, `state/last-method.ts`); «Dejar pendiente» solo con miembro. Nunca se envía precio. Idempotente: un UUID por intento (se renueva si cambia el carrito, el miembro o el método; un reintento igual no duplica). Sede: la activa; solo se pregunta si hay más de una. Tras vender, aviso verde breve y carrito vacío para la siguiente venta.
+- **Pendiente de cobro** (`sales`): en la ficha, bloque con el saldo y el detalle (productos × cantidad, día) solo si el miembro debe algo (`GET /members/{id}/pending-sales`). «Cobrar» abre una hoja con las ventas marcadas (se pueden desmarcar; se cobran enteras, todo o nada) y el método. `SALE_NOT_PENDING`/`NOTHING_TO_COLLECT` refrescan el bloque. La palabra «fiado» no se usa. No hay lista de compras recientes en la app.
+- **Peso rápido** (`body_tracking`): en la ficha, fila «Peso» con «Registrar peso» (hoja con solo kg, fecha de hoy por defecto y «Agregar nota» plegado; UUID por hoja). El último peso **solo se lee al tocar la fila** (`GET /members/{id}/measurements` queda en el registro de auditoría); tras guardar se muestra el valor devuelto sin volver a leer. Son datos sensibles (ley 29733): viven solo en memoria, sin caché persistente ni logs. Gráficos y rutinas son de la web.
+- Mock: Atlas Fitness tiene ambos módulos; Titan Studio ninguno (para comprobar que no se ve nada).
 
 ### Puntos de extensión (sin conectar)
 
-- **Venta rápida y fiados** (módulo `products`) y **medidas** (módulo `body_tracking`): no están en el API; no se implementaron. Cuando existan, añadir un método al servicio correspondiente en `types.ts`, a `real/` y a `mock/`, y mostrar la entrada solo con `hasFeature(...)`.
 - El historial de correcciones (`GET …/amendments`, admin) existe en el API y no se usa en la app.
 
 ### Probar en el teléfono (Android, Expo Go) con `adb reverse`
@@ -133,3 +141,9 @@ Expo SDK 58: https://docs.expo.dev/versions/v58.0.0/ (Router: Stack, opciones de
 - **Mock (web)**: escenarios «2 gyms» (selector de gimnasio, cambio de marca y de planes: Titan tiene dos planes) y «1 gym · 2 sedes».
 - **No probado**: usuario real con varias empresas o varias sedes (requiere superadmin/consola; sin credenciales), WhatsApp (`wa.me`) en el teléfono, teclado y áreas seguras de iOS, build de producción (EAS). El Galaxy S10+ se probó con Expo Go, no con un build propio.
 - Datos de prueba creados en la base local de desarrollo: el miembro «Prueba App Adriel» (DNI 45678912), renovaciones de «Lucía Prueba Kiosco» (72460666) y el usuario «Recepcion Cambio Clave» (DNI 10000077).
+
+### Módulos: verificación (venta, pendiente, peso, modificar/renovar)
+
+- Chromium 412 × 869 (Metro web :8090, `--disable-web-security` por CORS) contra el stack real, gimnasio Fuerza Uno: venta cobrada en efectivo (admin), venta pendiente a «Carlos Demo Medidas», cobro desde la ficha, peso 72.5 kg y lectura al tocar; con módulos apagados (`features={kiosk}`, recepcionista 10000002) no aparece «Vender» ni los bloques; `409 MEMBERSHIP_OVERLAP` con «Empezar el …» y modificar un periodo (1→6 meses) correctos con el contrato vigente.
+- El Galaxy S10+ estaba bloqueado (pantalla de bloqueo): **no se probó en teléfono** en esta entrega.
+- Datos creados en la base local: ventas demo (efectivo y pendiente cobrada), un peso de 72.5 kg y el periodo de Carlos Demo Medidas pasó a 6 meses.

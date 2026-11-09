@@ -157,9 +157,13 @@ export async function hasStoredSession(): Promise<boolean> {
   return access !== null || (await readRefresh()) !== null;
 }
 
-export async function signIn(dni: string, password: string): Promise<void> {
+/** `documentNumber` is the number of a DNI, a CE or a passport. */
+export async function signIn(
+  documentNumber: string,
+  password: string,
+): Promise<void> {
   const response = await authRequest<TokenResponse>("/v1/login", {
-    dni,
+    document: documentNumber,
     password,
     system: AUTH_SYSTEM,
   });
@@ -178,12 +182,12 @@ export async function signOut(): Promise<void> {
 }
 
 export async function changePassword(
-  dni: string,
+  documentNumber: string,
   current: string,
   next: string,
 ): Promise<void> {
   await authRequest("/v1/password/change", {
-    dni,
+    document: documentNumber,
     current_password: current,
     new_password: next,
   });

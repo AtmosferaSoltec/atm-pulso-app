@@ -2,6 +2,8 @@ import { Linking, Pressable, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BodyWeight } from "@/components/BodyWeight";
+import { PendingBalance } from "@/components/PendingBalance";
 import {
   Avatar,
   Button,
@@ -105,7 +107,7 @@ export default function MemberDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const result = useMember(id);
   const { colors } = useTheme();
-  const { visibility } = useSession();
+  const { visibility, hasFeature } = useSession();
   const today = todayLima();
   if (result.loading)
     return (
@@ -170,6 +172,8 @@ export default function MemberDetail() {
             }
           />
         </View>
+        {hasFeature("sales") && <PendingBalance memberId={id} />}
+        {hasFeature("body_tracking") && <BodyWeight memberId={id} />}
         <View>
           <Text variant="caption" tone="muted" style={{ marginBottom: 2 }}>
             SUSCRIPCIONES

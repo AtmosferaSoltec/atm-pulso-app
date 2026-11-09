@@ -6,11 +6,22 @@ import { services } from "@/services";
 import { useSession } from "@/state/session";
 import { useTheme } from "@/theme/ThemeProvider";
 
-/** DNI + password against atm-auth-api. If the first password must be replaced, the same screen asks for a new one. */
+/**
+ * What the document field keeps: letters and digits in upper case (a DNI, a CE or a passport; the type is not
+ * asked). atm-auth-api also ignores spaces, dashes and case.
+ */
+function cleanDocument(value: string): string {
+  return value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 12);
+}
+
+/**
+ * Document + password against atm-auth-api. If the first password must be replaced, the same screen asks for a
+ * new one.
+ */
 export default function Login() {
   const { signIn, changePassword, pending, notice } = useSession();
   const { colors, radius } = useTheme();
-  const [dni, setDni] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("");
   const [password, setPassword] = useState("");
   const [changing, setChanging] = useState(false);
   const [next, setNext] = useState("");
@@ -19,13 +30,16 @@ export default function Login() {
   const [attempted, setAttempted] = useState(false);
 
   const validNext =
-    next.length >= 8 && next !== dni && next !== password && next === repeat;
+    next.length >= 8 &&
+    next !== documentNumber &&
+    next !== password &&
+    next === repeat;
   const nextError = !attempted
     ? undefined
     : next.length < 8
       ? "Mínimo 8 caracteres."
-      : next === dni || next === password
-        ? "Debe ser distinta de tu DNI y de la actual."
+      : next === documentNumber || next === password
+        ? "Debe ser distinta de tu documento y de la actual."
         : undefined;
 
   async function submit() {
@@ -34,12 +48,12 @@ export default function Login() {
       if (changing) {
         setAttempted(true);
         if (!validNext) return;
-        await changePassword(dni, password, next);
+        await changePassword(documentNumber, password, next);
         setPassword(next);
-        await signIn(dni, next);
+        await signIn(documentNumber, next);
         return;
       }
-      await signIn(dni.trim(), password);
+      await signIn(documentNumber, password);
     } catch (e) {
       const code = (e as { code?: string })?.code;
       if (code === "PASSWORD_CHANGE_REQUIRED") {
@@ -81,12 +95,14 @@ export default function Login() {
           {!changing && (
             <>
               <Input
-                label="DNI"
-                keyboardType="number-pad"
+                label="Documento"
+                placeholder="Ingresa tu documento"
+                autoCapitalize="characters"
+                autoCorrect={false}
                 maxLength={12}
                 autoComplete="username"
-                value={dni}
-                onChangeText={(v) => setDni(v.replace(/\D/g, ""))}
+                value={documentNumber}
+                onChangeText={(v) => setDocumentNumber(cleanDocument(v))}
               />
               <Input
                 label="Contraseña"
@@ -134,7 +150,9 @@ export default function Login() {
         <Button
           title={changing ? "Guardar y entrar" : "Entrar"}
           loading={pending}
-          disabled={!changing && (dni.length < 8 || password.length === 0)}
+          disabled={
+            !changing && (documentNumber.length < 6 || password.length === 0)
+          }
           onPress={submit}
         />
         <Text variant="caption" tone="muted" style={{ textAlign: "center" }}>

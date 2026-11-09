@@ -34,8 +34,8 @@ export function MemberPicker({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setBusy(true);
     const t = setTimeout(() => {
+      setBusy(true);
       services.members
         .list({ search: query, status: "all", page: 1, page_size: 6 })
         .then(
