@@ -59,6 +59,8 @@ export interface SessionService {
 export interface MembersService {
   list(query: MemberListQuery): Promise<MemberList>;
   get(id: string): Promise<MemberDetail>;
+  /** Name of a DNI (RENIEC via the API), to pre-fill a new member. `null` when unknown or the lookup is down. */
+  lookupDni(dni: string): Promise<string | null>;
   enroll(input: EnrollMember): Promise<Sale>;
   renew(memberId: string, input: RenewMember): Promise<Sale>;
   /** Corrects a period that has not ended (`PATCH /members/{id}/memberships/{membership_id}`). */

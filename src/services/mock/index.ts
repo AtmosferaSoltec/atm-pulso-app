@@ -226,6 +226,9 @@ export const mockServices: Services = {
         if (!member) return fail("NOT_FOUND", "Este registro ya no existe.");
         return member;
       }),
+    // Any DNI ending in 0 is "unknown" so the manual path can be tried.
+    lookupDni: (dni) =>
+      delay(() => (dni.endsWith("0") ? null : "Rosa Elena Quispe Mamani")),
     enroll: (input) =>
       delay(() => {
         if (store().some((m) => m.document_number === input.document_number))

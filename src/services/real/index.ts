@@ -17,6 +17,23 @@ import * as tokens from "./tokens";
 
 const money = (value: string) => Number(value).toFixed(2);
 
+/** RENIEC answers in capitals: «JUAN DE LA CRUZ» → «Juan de la Cruz». */
+const PARTICLES = new Set(["de", "del", "la", "las", "los", "y"]);
+const titleCase = (value: string) =>
+  value
+    .trim()
+    .toLocaleLowerCase("es-PE")
+    .split(/\s+/)
+    .map((word, i) =>
+      i > 0 && PARTICLES.has(word)
+        ? word
+        : word.replace(
+            /(^|-)(\p{L})/gu,
+            (_, sep: string, ch: string) => sep + ch.toLocaleUpperCase("es-PE"),
+          ),
+    )
+    .join(" ");
+
 export const realServices: Services = {
   mode: "real",
   capabilities: { updatePeriod: true },
@@ -76,6 +93,30 @@ export const realServices: Services = {
     },
     async get(id) {
       return (await api<{ data: MemberDetail }>(`/members/${id}`)).data;
+    },
+    async lookupDni(dni) {
+      try {
+        const person = (
+          await api<{
+            data: {
+              first_names?: string;
+              paternal_surname?: string;
+              maternal_surname?: string;
+              full_name?: string;
+            };
+          }>(`/documents/persons/${dni}`)
+        ).data;
+        const parts = [
+          person.first_names,
+          person.paternal_surname,
+          person.maternal_surname,
+        ].filter(Boolean);
+        const name = parts.length ? parts.join(" ") : (person.full_name ?? "");
+        return titleCase(name) || null;
+      } catch {
+        // Not found or lookup down: the person types the name.
+        return null;
+      }
     },
     async enroll(input) {
       return (

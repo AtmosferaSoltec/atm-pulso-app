@@ -8,6 +8,7 @@ import {
   Stack,
   ThemeProvider as NavigationThemeProvider,
 } from "expo-router";
+import { NavigationBar } from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { View } from "react-native";
@@ -56,6 +57,8 @@ function Navigator() {
       }}
     >
       <StatusBar style={scheme === "dark" ? "light" : "dark"} />
+      {/* Follows the app theme (which can differ from the phone's); needs enforceContrast: false in app.json. */}
+      <NavigationBar style={scheme === "dark" ? "dark" : "light"} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={!user}>
           <Stack.Screen name="(auth)" />

@@ -1,6 +1,6 @@
 /** Small color helpers for the per-gym brand color (#rrggbb). */
 
-export const DEFAULT_BRAND = "#246b55";
+export const DEFAULT_BRAND = "#176b80";
 
 export function normalizeHex(hex: string | null | undefined): string {
   return hex && /^#[0-9a-fA-F]{6}$/.test(hex)

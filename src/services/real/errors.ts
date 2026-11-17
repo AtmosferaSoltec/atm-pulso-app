@@ -28,6 +28,8 @@ const MESSAGES: Record<string, string> = {
   CURRENT_PASSWORD_INCORRECT: "La contraseña actual no es correcta.",
   NO_ACCESS: "Tu cuenta no tiene acceso a Pulso. Contacta a Atmósfera.",
   USER_INACTIVE: "Tu usuario está desactivado. Contacta a tu administrador.",
+  GYM_SUSPENDED:
+    "El acceso de tu gimnasio a Pulso está suspendido. Contacta a Atmósfera.",
   UNAUTHORIZED: "Tu sesión expiró. Vuelve a iniciar sesión.",
   PASSWORD_CHANGE_REQUIRED: "Debes crear una nueva contraseña para continuar.",
   WEAK_PASSWORD:

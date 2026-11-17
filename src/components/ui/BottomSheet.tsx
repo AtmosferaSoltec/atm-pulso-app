@@ -3,7 +3,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   PanResponder,
-  Platform,
   Pressable,
   ScrollView,
   View,
@@ -21,12 +20,15 @@ export interface BottomSheetProps {
   visible: boolean;
   onClose: () => void;
   title?: string;
+  /** Hide «Cerrar» when the sheet already ends with its own button (e.g. «Listo»). */
+  hideClose?: boolean;
   children: ReactNode;
 }
 export function BottomSheet({
   visible,
   onClose,
   title,
+  hideClose,
   children,
 }: BottomSheetProps) {
   const { colors } = useTheme();
@@ -60,7 +62,7 @@ export function BottomSheet({
       statusBarTranslucent
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior="padding"
         style={{ flex: 1, justifyContent: "flex-end" }}
       >
         <Pressable
@@ -114,13 +116,15 @@ export function BottomSheet({
             <Text variant="heading" style={{ flex: 1 }}>
               {title}
             </Text>
-            <Button
-              title="Cerrar"
-              accessibilityLabel="Cerrar hoja"
-              variant="ghost"
-              fullWidth={false}
-              onPress={onClose}
-            />
+            {!hideClose && (
+              <Button
+                title="Cerrar"
+                accessibilityLabel="Cerrar hoja"
+                variant="ghost"
+                fullWidth={false}
+                onPress={onClose}
+              />
+            )}
           </View>
           <ScrollView
             keyboardShouldPersistTaps="handled"

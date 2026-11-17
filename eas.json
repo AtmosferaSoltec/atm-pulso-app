@@ -4,19 +4,38 @@
     "appVersionSource": "local"
   },
   "build": {
-    "production": {
-      "distribution": "store",
-      "ios": {
-        "resourceClass": "m-medium"
-      },
+    "base": {
       "env": {
         "EXPO_PUBLIC_API_MODE": "real",
         "EXPO_PUBLIC_PULSO_API_URL": "https://pulso-api.atmosferast.com/api/v1",
         "EXPO_PUBLIC_AUTH_API_URL": "https://auth.atmosferast.com"
       }
+    },
+    "preview": {
+      "extends": "base",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "extends": "base",
+      "distribution": "store",
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
   }
 }

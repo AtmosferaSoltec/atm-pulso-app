@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { Image, Keyboard, View } from "react-native";
 
-import { Button, Icon, Input, Screen, Text } from "@/components/ui";
+import { Button, Input, Screen, Text } from "@/components/ui";
 import { services } from "@/services";
 import { useSession } from "@/state/session";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -20,7 +20,7 @@ function cleanDocument(value: string): string {
  */
 export default function Login() {
   const { signIn, changePassword, pending, notice } = useSession();
-  const { colors, radius } = useTheme();
+  const { radius } = useTheme();
   const [documentNumber, setDocumentNumber] = useState("");
   const [password, setPassword] = useState("");
   const [changing, setChanging] = useState(false);
@@ -43,6 +43,8 @@ export default function Login() {
         : undefined;
 
   async function submit() {
+    // Otherwise the open keyboard lands on the member search after signing in.
+    Keyboard.dismiss();
     setError(undefined);
     try {
       if (changing) {
@@ -71,18 +73,11 @@ export default function Login() {
       contentContainerStyle={{ justifyContent: "center" }}
     >
       <View style={{ flex: 1, justifyContent: "center", gap: 12 }}>
-        <View
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: radius.lg,
-            backgroundColor: colors.brand,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon name="pulse" size={26} color={colors.onBrand} />
-        </View>
+        <Image
+          source={require("../../../assets/images/icon.png")}
+          accessibilityIgnoresInvertColors
+          style={{ width: 48, height: 48, borderRadius: radius.lg }}
+        />
         <Text variant="title">Pulso</Text>
         {changing ? (
           <Text tone="muted">

@@ -2,7 +2,6 @@ import { Linking, Pressable, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { BodyWeight } from "@/components/BodyWeight";
 import { PendingBalance } from "@/components/PendingBalance";
 import {
   Avatar,
@@ -11,7 +10,6 @@ import {
   Icon,
   Screen,
   SkeletonList,
-  StatusChip,
   Text,
 } from "@/components/ui";
 import { useMember } from "@/hooks/queries";
@@ -31,8 +29,10 @@ import { useTheme } from "@/theme/ThemeProvider";
 function statusLine(member: Member) {
   if (member.status === "scheduled")
     return `Empieza el ${formatDate(member.starts_on)}`;
-  const verb = member.days_remaining < 0 ? "Venció el" : "Hasta el";
-  return `${daysLabel(member.days_remaining)} · ${verb} ${formatDate(coverageEnd(member))}`;
+  const end = formatDate(coverageEnd(member));
+  if (member.days_remaining < 0)
+    return `Venció el ${end} · ${daysLabel(member.days_remaining).replace("Venció ", "")}`;
+  return `${daysLabel(member.days_remaining)} · hasta el ${end}`;
 }
 
 function SubscriptionRow({
@@ -140,12 +140,19 @@ export default function MemberDetail() {
           </View>
         </View>
         <View style={{ gap: 6 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <StatusChip status={member.status} />
-            <Text variant="label" style={{ flex: 1 }}>
-              {statusLine(member)}
-            </Text>
-          </View>
+          <Text
+            variant="label"
+            style={{
+              color: {
+                active: colors.success,
+                expiring: colors.warning,
+                expired: colors.danger,
+                scheduled: colors.info,
+              }[member.status],
+            }}
+          >
+            {statusLine(member)}
+          </Text>
           {visibility.showBranch && (
             <Text variant="caption" tone="muted">
               Sede {member.home_branch.name}
@@ -173,7 +180,6 @@ export default function MemberDetail() {
           />
         </View>
         {hasFeature("sales") && <PendingBalance memberId={id} />}
-        {hasFeature("body_tracking") && <BodyWeight memberId={id} />}
         <View>
           <Text variant="caption" tone="muted" style={{ marginBottom: 2 }}>
             SUSCRIPCIONES
@@ -194,7 +200,7 @@ export default function MemberDetail() {
         style={{
           paddingHorizontal: 16,
           paddingTop: 12,
-          paddingBottom: Math.max(insets.bottom, 12),
+          paddingBottom: insets.bottom + 12,
           borderTopWidth: 1,
           borderColor: colors.border,
           backgroundColor: colors.background,

@@ -1,5 +1,5 @@
 import { randomUUID } from "expo-crypto";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { router, Stack } from "expo-router";
 
@@ -93,6 +93,28 @@ export function SubscriptionForm({
   const [doc, setDoc] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  // A full DNI fills the name from RENIEC; a name typed by hand is never overwritten.
+  const [lookedUp, setLookedUp] = useState("");
+  const autoName = useRef("");
+  const fullDni = enroll && docType === "dni" && /^\d{8}$/.test(doc);
+  const lookingUp = fullDni && lookedUp !== doc;
+  useEffect(() => {
+    if (!fullDni) return;
+    let alive = true;
+    services.members.lookupDni(doc).then((found) => {
+      if (!alive) return;
+      setLookedUp(doc);
+      if (!found) return;
+      setName((current) => {
+        if (current.trim() && current !== autoName.current) return current;
+        autoName.current = found;
+        return found;
+      });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [fullDni, doc]);
   const initialMonths = String(subscription?.months ?? 1);
   const [duration, setDuration] = useState<string>(
     (DURATIONS as readonly string[]).includes(initialMonths)
@@ -275,7 +297,11 @@ export function SubscriptionForm({
             </View>
           </Field>
           <Input
-            label="Nombre y apellidos"
+            label={
+              lookingUp
+                ? "Nombre y apellidos · buscando…"
+                : "Nombre y apellidos"
+            }
             autoCapitalize="words"
             autoComplete="name"
             value={name}
@@ -451,6 +477,7 @@ export function SubscriptionForm({
       <BottomSheet
         visible={!!sale}
         onClose={finish}
+        hideClose
         title={
           enroll
             ? "Miembro registrado"

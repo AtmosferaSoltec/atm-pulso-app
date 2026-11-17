@@ -18,7 +18,7 @@ Una sola lista en toda la app. El atajo «por vencer» es el chip **Por vencer N
 
 ## Principios aplicados
 
-1. **Densidad cómoda.** Filas de lista de 60 px (avatar 40, nombre, «DNI · vence en N días», estado). Nada de tarjetas grandes.
+1. **Densidad cómoda.** Filas de lista de 60 px (avatar 40, nombre completo, «Vence en N días · DNI»). Sin chip de estado: la frase es el estado y solo lleva color cuando pide atención (por vencer ámbar, vencido rojo, programado azul). Nada de tarjetas grandes.
 2. **Encabezados pequeños.** El texto más grande es `title` (20 px). No hay tamaños de display ni cifras gigantes. Las pantallas internas usan el encabezado nativo con un título corto.
 3. **Una acción principal por pantalla**, siempre al alcance del pulgar: «Nuevo» flotante abajo a la derecha, «Renovar» fijo abajo en la ficha y el botón del formulario al final.
 4. **Formularios cortos y ya rellenados.**
@@ -60,7 +60,7 @@ Laboratorio (`__DEV__`, en Perfil): escenarios «1 gym · 1 sede» (por defecto)
 ## Estructura
 
 - `src/app/`: solo rutas y layouts (grupos `(auth)` y `(staff)`; el índice raíz redirige).
-- `src/components/`: `GymHeader` (identidad + selector condicional + acceso a perfil), `MemberRow`, `SubscriptionForm` (alta, renovación y modificación) y `ui/` (Avatar, BottomSheet, Button, Chips, Icon, Input, Screen, States, StatusChip, Text).
+- `src/components/`: `GymHeader` (identidad + selector condicional + acceso a perfil), `MemberRow`, `SubscriptionForm` (alta, renovación y modificación) y `ui/` (Avatar, BottomSheet, Button, Chips, Icon, Input, Screen, States, Text).
 - `src/hooks/queries.ts`: las pantallas leen datos solo con estos hooks.
 - `src/services/types.ts`: interfaces. `src/services/index.ts`: único punto de composición. `src/services/real/` (HTTP) y `src/services/mock/` (datos y latencia simulada): adaptadores que nunca importan las pantallas.
 - `src/types/`: contratos de dominio alineados con OpenAPI.
@@ -104,28 +104,28 @@ Un valor del entorno gana sobre `.env`: `EXPO_PUBLIC_API_MODE=mock npx expo star
 - La fecha de fin de cobertura que muestra la ficha se calcula con `days_remaining` (regla de cobertura del servidor); `ends_on` de `MemberView` es el de un solo periodo.
 - **Gimnasio**: `/v1/session/tenants` define `visibility.showGym` (más de uno). **Sede**: `user.branches` de `/me` (admin: todas; recepcionista: las asignadas) define `showBranch`. La lista de miembros es del gimnasio completo; la sede solo se usa como sede de cobro.
 
-### Módulos opcionales (`sales`, `body_tracking`)
+### Módulos opcionales (`sales`)
 
 **Regla: si el gimnasio no tiene el módulo (`user.gym.features`, vía `useSession().hasFeature`), la app no muestra nada de él** (ni botón, ni bloque, ni llamadas). Con `FEATURE_DISABLED` el API responde 403, así que tampoco se consulta «por si acaso».
 
-- **Venta rápida** (`sales`): botón «Vender» en la lista (junto a «Nuevo») → lista compacta de productos activos (`GET /products`) con precio, tocar suma 1 y «−» resta (1–99). Total fijo abajo. Miembro opcional (hoja de búsqueda por nombre o documento). «Cobrar» abre una hoja con el método (efectivo, Yape/Plin, tarjeta, transferencia; recuerda el último en memoria, `state/last-method.ts`); «Dejar pendiente» solo con miembro. Nunca se envía precio. Idempotente: un UUID por intento (se renueva si cambia el carrito, el miembro o el método; un reintento igual no duplica). Sede: la activa; solo se pregunta si hay más de una. Tras vender, aviso verde breve y carrito vacío para la siguiente venta.
+- **Venta rápida** (`sales`): botón «Vender» en la lista (junto a «Nuevo») → lista compacta de productos activos (`GET /products`) con precio, tocar suma 1 y «−» resta (1–99). Total fijo abajo. Miembro opcional (hoja de búsqueda por nombre o documento). «Cobrar» abre una hoja con el método (efectivo, Yape/Plin, tarjeta, transferencia; recuerda el último en memoria, `state/last-method.ts`); «Dejar pendiente» solo aparece cuando hay un miembro elegido. Nunca se envía precio. Idempotente: un UUID por intento (se renueva si cambia el carrito, el miembro o el método; un reintento igual no duplica). Sede: la activa; solo se pregunta si hay más de una. Tras vender, aviso verde breve, carrito vacío y sin miembro (la siguiente venta suele ser de otra persona).
 - **Pendiente de cobro** (`sales`): en la ficha, bloque con el saldo y el detalle (productos × cantidad, día) solo si el miembro debe algo (`GET /members/{id}/pending-sales`). «Cobrar» abre una hoja con las ventas marcadas (se pueden desmarcar; se cobran enteras, todo o nada) y el método. `SALE_NOT_PENDING`/`NOTHING_TO_COLLECT` refrescan el bloque. La palabra «fiado» no se usa. No hay lista de compras recientes en la app.
-- **Peso rápido** (`body_tracking`): en la ficha, fila «Peso» con «Registrar peso» (hoja con solo kg, fecha de hoy por defecto y «Agregar nota» plegado; UUID por hoja). El último peso **solo se lee al tocar la fila** (`GET /members/{id}/measurements` queda en el registro de auditoría); tras guardar se muestra el valor devuelto sin volver a leer. Son datos sensibles (ley 29733): viven solo en memoria, sin caché persistente ni logs. Gráficos y rutinas son de la web.
+- **Peso** (`body_tracking`): no está en la app (solo lo diario: buscar, vender, renovar, registrar). Se registra y consulta en la web.
 - Mock: Atlas Fitness tiene ambos módulos; Titan Studio ninguno (para comprobar que no se ve nada).
 
 ### Puntos de extensión (sin conectar)
 
 - El historial de correcciones (`GET …/amendments`, admin) existe en el API y no se usa en la app.
 
-### Probar en el teléfono (Android, Expo Go) con `adb reverse`
+### Probar en el teléfono (Android, build de desarrollo) con `adb reverse`
 
 1. Levantar el stack local: `atm-pulso-api/scripts/dev-all.sh start` (auth :3130, pulso-api :3001).
 2. `.env` con `EXPO_PUBLIC_API_MODE=real` y las URLs `localhost` de arriba.
-3. Con el teléfono desbloqueado y la depuración USB activa (`adb devices`):
+3. Teléfono con depuración USB (`adb devices`) y túneles:
    `adb reverse tcp:3001 tcp:3001 && adb reverse tcp:3130 tcp:3130 && adb reverse tcp:8081 tcp:8081`
-   (si Metro usa otro puerto, p. ej. `npx expo start --port 8090`, se invierte ese: `adb reverse tcp:8090 tcp:8090`).
-4. `npx expo start` y abrir `exp://localhost:<puerto>` en Expo Go (`adb shell am start -a android.intent.action.VIEW -d exp://localhost:8081 host.exp.exponent`).
-5. Usuarios demo del gimnasio Fuerza Uno: DNI `10000001` (admin) y `10000002` (recepcionista), clave `Pulso-Demo-2026`.
+   (se pierden si el USB se reconecta: hay que volver a crearlos).
+4. Primera vez o tras agregar un módulo nativo: `ANDROID_HOME=~/Development/android-sdk npx expo run:android` (compila e instala `com.atmosferast.pulso`). Después basta `npx expo start` y abrir la app.
+5. Empresa de pruebas local **Atmósfera Demo** (RUC 20611111117, activa en todos los sistemas): DNI `70000001` (admin) y `70000002` (recepcionista), clave `Demo-Atmosfera-2026`. Solo existe en local; en producción se crea a mano.
 
 Sin teléfono: `npx expo start --web` y Chromium a 412 × 869. pulso-api y auth-api solo aceptan los orígenes web de desarrollo (CORS); para probar desde otro origen hay que interceptar las respuestas y añadir las cabeceras, o ampliar `ORIGINS` del script de desarrollo.
 

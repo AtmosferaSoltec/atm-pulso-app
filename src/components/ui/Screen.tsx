@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   RefreshControl,
   ScrollView,
   View,
@@ -41,7 +40,8 @@ export function Screen({
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      // Edge-to-edge Android does not resize the window for the keyboard, so pad on both platforms.
+      behavior="padding"
     >
       {scroll ? (
         <ScrollView
@@ -66,7 +66,15 @@ export function Screen({
           {children}
         </ScrollView>
       ) : (
-        <View style={[{ flex: 1 }, pad]}>{children}</View>
+        <View
+          style={[
+            { flex: 1 },
+            pad,
+            { paddingBottom: insets.bottom + (padded ? spacing.lg : 0) },
+          ]}
+        >
+          {children}
+        </View>
       )}
     </KeyboardAvoidingView>
   );

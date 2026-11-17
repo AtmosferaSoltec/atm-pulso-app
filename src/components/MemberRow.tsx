@@ -5,15 +5,24 @@ import { daysLabel, formatDate } from "@/lib/format";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { MemberView } from "@/types";
 
-import { Avatar, StatusChip, Text } from "./ui";
+import { Avatar, Text } from "./ui";
 
-/** Compact 60 px row: who, document, when it ends, status. */
+/**
+ * Compact 60 px row: who, when it ends, document. The status is the phrase itself («Vence en 3 días»); it is
+ * coloured only when it asks for attention, so a long name never loses room to a chip.
+ */
 export function MemberRow({ member }: { member: MemberView }) {
   const { colors } = useTheme();
   const when =
     member.status === "scheduled"
       ? `Empieza ${formatDate(member.starts_on)}`
       : daysLabel(member.days_remaining);
+  const tint = {
+    active: colors.textMuted,
+    expiring: colors.warning,
+    expired: colors.danger,
+    scheduled: colors.info,
+  }[member.status];
   return (
     <Pressable
       accessibilityRole="button"
@@ -36,10 +45,19 @@ export function MemberRow({ member }: { member: MemberView }) {
           {member.full_name}
         </Text>
         <Text variant="caption" tone="muted" numberOfLines={1}>
-          {member.document_type.toUpperCase()} {member.document_number} · {when}
+          <Text
+            variant="caption"
+            style={{
+              color: tint,
+              fontFamily:
+                member.status === "active" ? undefined : "Manrope_700Bold",
+            }}
+          >
+            {when}
+          </Text>
+          {` · ${member.document_type.toUpperCase()} ${member.document_number}`}
         </Text>
       </View>
-      <StatusChip status={member.status} />
     </Pressable>
   );
 }

@@ -93,7 +93,9 @@ export default function SaleScreen() {
           ? `Venta cobrada · ${formatMoney(sale.total)} · ${METHOD_LABEL[method]}`
           : `Pendiente de ${member?.full_name} · ${formatMoney(sale.total)}`,
       );
+      // The next sale is usually for someone else: start clean.
       setCart({});
+      setMember(null);
       setPaying(false);
       attempt.current = { signature: "", id: "" };
       invalidate();
@@ -241,7 +243,7 @@ export default function SaleScreen() {
         style={{
           paddingHorizontal: 16,
           paddingTop: 10,
-          paddingBottom: Math.max(insets.bottom, 12),
+          paddingBottom: insets.bottom + 12,
           gap: 8,
           borderTopWidth: 1,
           borderColor: colors.border,
@@ -266,15 +268,17 @@ export default function SaleScreen() {
           </Text>
         </View>
         <View style={{ flexDirection: "row", gap: 8 }}>
-          <Button
-            title="Dejar pendiente"
-            variant="secondary"
-            fullWidth={false}
-            style={{ flex: 1 }}
-            disabled={lines.length === 0 || !member}
-            loading={saving && !paying}
-            onPress={() => void submit("pending")}
-          />
+          {member && (
+            <Button
+              title="Dejar pendiente"
+              variant="secondary"
+              fullWidth={false}
+              style={{ flex: 1 }}
+              disabled={lines.length === 0}
+              loading={saving && !paying}
+              onPress={() => void submit("pending")}
+            />
+          )}
           <Button
             title="Cobrar"
             fullWidth={false}
@@ -286,11 +290,6 @@ export default function SaleScreen() {
             }}
           />
         </View>
-        {lines.length > 0 && !member && (
-          <Text variant="caption" tone="muted">
-            Para dejar pendiente, elige un miembro.
-          </Text>
-        )}
       </View>
 
       <BottomSheet
