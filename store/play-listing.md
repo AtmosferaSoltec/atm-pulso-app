@@ -7,7 +7,7 @@
 - **Categoría:** Empresa (Business)
 - **Tipo:** App, gratis
 - **Correo de contacto:** soporte@atmosferast.com (verificar que reciba correo)
-- **Política de privacidad:** https://pulso.atmosferast.com/privacidad.html
+- **Política de privacidad:** https://atmosferast.com/privacy
 
 ## Descripción breve (máx. 80)
 
