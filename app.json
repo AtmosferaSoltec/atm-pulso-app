@@ -67,6 +67,12 @@
         "projectId": "6a75a4e7-acdb-49c9-a3fe-cf9af3bd34f6"
       }
     },
-    "owner": "atmosfera-st"
+    "owner": "atmosfera-st",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/6a75a4e7-acdb-49c9-a3fe-cf9af3bd34f6"
+    }
   }
 }

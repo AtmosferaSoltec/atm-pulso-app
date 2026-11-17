@@ -4,22 +4,17 @@
     "appVersionSource": "local"
   },
   "build": {
-    "base": {
-      "env": {
-        "EXPO_PUBLIC_API_MODE": "real",
-        "EXPO_PUBLIC_PULSO_API_URL": "https://pulso-api.atmosferast.com/api/v1",
-        "EXPO_PUBLIC_AUTH_API_URL": "https://auth.atmosferast.com"
-      }
-    },
     "preview": {
-      "extends": "base",
+      "environment": "preview",
+      "channel": "preview",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
-      "extends": "base",
+      "environment": "production",
+      "channel": "production",
       "distribution": "store",
       "android": {
         "buildType": "app-bundle"
