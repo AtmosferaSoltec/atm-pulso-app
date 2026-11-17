@@ -129,6 +129,24 @@ Un valor del entorno gana sobre `.env`: `EXPO_PUBLIC_API_MODE=mock npx expo star
 
 Sin teléfono: `npx expo start --web` y Chromium a 412 × 869. pulso-api y auth-api solo aceptan los orígenes web de desarrollo (CORS); para probar desde otro origen hay que interceptar las respuestas y añadir las cabeceras, o ampliar `ORIGINS` del script de desarrollo.
 
+## Publicar
+
+Las URLs de producción viven en las variables de entorno de EAS (entornos `production` y `preview`), no en `eas.json` ni en `.env`: así el build y `eas update` usan las mismas.
+
+**Actualización OTA** (solo JS, estilos, textos, imágenes; llega al abrir la app, sin revisión de la tienda):
+
+```bash
+npx eas-cli@latest update --channel production --environment production --message "…"
+```
+
+Para probar antes, publicar en `--channel preview --environment preview` y abrir el APK de preview.
+
+**Build a la tienda** (obligatorio si cambia algo nativo: un paquete con código nativo, `app.json` nativo — permisos, ícono, splash, plugins — o la versión del SDK):
+
+1. Subir `version` en `app.json` (1.0.0 → 1.1.0). `runtimeVersion` sigue a `version` (`policy: appVersion`): las actualizaciones solo llegan a los builds con la misma versión, así un JS nuevo nunca cae en un nativo viejo. Olvidarlo puede romper la app de quien la tenga instalada.
+2. Subir `android.versionCode` e `ios.buildNumber` (Play y App Store no aceptan repetidos).
+3. `npx eas-cli@latest build --platform android --profile production --auto-submit` → track interno de Play con la llave guardada en EAS.
+
 ## Referencias
 
 Expo SDK 58: https://docs.expo.dev/versions/v58.0.0/ (Router: Stack, opciones de pantalla, `Stack.Protected`) y https://docs.expo.dev/llms.txt.
