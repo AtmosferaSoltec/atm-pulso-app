@@ -44,3 +44,7 @@ example
 
 # local env
 .env
+
+# Local EAS builds
+*.aab
+*.apk

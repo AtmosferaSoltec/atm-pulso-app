@@ -60,12 +60,15 @@ export function DateField({
   onChange,
   placeholder = "Elegir fecha",
   error,
+  minDate,
 }: {
   label: string;
   value: string | null;
   onChange: (iso: string) => void;
   placeholder?: string;
   error?: string;
+  /** Earliest selectable day (ISO); earlier days are greyed out. */
+  minDate?: string;
 }) {
   const { colors, radius } = useTheme();
   const [open, setOpen] = useState(false);
@@ -107,7 +110,8 @@ export function DateField({
 
       <BottomSheet visible={open} onClose={() => setOpen(false)} title={label}>
         <Calendar
-          current={value ?? undefined}
+          current={value ?? minDate ?? undefined}
+          minDate={minDate}
           firstDay={1}
           enableSwipeMonths
           markedDates={

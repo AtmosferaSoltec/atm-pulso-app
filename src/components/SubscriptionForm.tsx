@@ -1,5 +1,5 @@
 import { randomUUID } from "expo-crypto";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator, Keyboard, Pressable, View } from "react-native";
 import { router, Stack } from "expo-router";
 
@@ -101,35 +101,33 @@ export function SubscriptionForm({
   const [doc, setDoc] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  // A full DNI fills the name from RENIEC; a name typed by hand is never overwritten.
-  const [lookedUp, setLookedUp] = useState("");
-  // Bumped by the magnifier: searches the same DNI again.
-  const [searches, setSearches] = useState(0);
-  const autoName = useRef("");
+  // The name is looked up only when the magnifier is pressed (never while typing).
+  const [lookingUp, setLookingUp] = useState(false);
+  const [lookupNote, setLookupNote] = useState<string | undefined>();
   const fullDni = enroll && docType === "dni" && /^\d{8}$/.test(doc);
-  const lookingUp = fullDni && lookedUp !== doc;
-  useEffect(() => {
-    if (!fullDni) return;
-    let alive = true;
-    services.members.lookupDni(doc).then((found) => {
-      if (!alive) return;
-      setLookedUp(doc);
-      if (!found) return;
-      setName((current) => {
-        if (current.trim() && current !== autoName.current) return current;
-        autoName.current = found;
-        return found;
-      });
-    });
-    return () => {
-      alive = false;
-    };
-  }, [fullDni, doc, searches]);
+  async function searchDni() {
+    if (!fullDni || lookingUp) return;
+    Keyboard.dismiss();
+    setLookingUp(true);
+    setLookupNote(undefined);
+    try {
+      const found = await services.members.lookupDni(doc);
+      if (found) setName(found);
+      else setLookupNote("No encontramos ese DNI. Escribe el nombre a mano.");
+    } catch {
+      setLookupNote("No se pudo buscar ahora. Escribe el nombre a mano.");
+    } finally {
+      setLookingUp(false);
+    }
+  }
   const initialMonths = String(subscription?.months ?? 1);
   const [duration, setDuration] = useState<string>(
     durations.includes(initialMonths) ? initialMonths : "other",
   );
-  const [otherMonths, setOtherMonths] = useState(initialMonths);
+  // «Otro» starts empty: the user types the months (a modified period keeps its own).
+  const [otherMonths, setOtherMonths] = useState(
+    durations.includes(initialMonths) ? "" : initialMonths,
+  );
   const [chosenStart, setStartChoice] = useState<
     "continue" | "today" | "other"
   >(edit ? "other" : continueOn ? "continue" : "today");
@@ -302,11 +300,12 @@ export function SubscriptionForm({
                   }
                   keyboardType="number-pad"
                   value={doc}
-                  onChangeText={(v) => setDoc(v.replace(/\D/g, ""))}
+                  onChangeText={(v) => {
+                    setDoc(v.replace(/\D/g, ""));
+                    setLookupNote(undefined);
+                  }}
                   maxLength={docType === "dni" ? 8 : 12}
                   style={{ minHeight: 44 }}
-                  returnKeyType="search"
-                  onSubmitEditing={() => setSearches((n) => n + 1)}
                   error={
                     show(validDoc)
                       ? docType === "dni"
@@ -321,11 +320,7 @@ export function SubscriptionForm({
                   accessibilityRole="button"
                   accessibilityLabel="Buscar DNI"
                   disabled={!fullDni || lookingUp}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setLookedUp("");
-                    setSearches((n) => n + 1);
-                  }}
+                  onPress={() => void searchDni()}
                   style={({ pressed }) => ({
                     width: 44,
                     height: 44,
@@ -358,6 +353,7 @@ export function SubscriptionForm({
             autoCapitalize="words"
             autoComplete="name"
             value={name}
+            hint={lookupNote}
             onChangeText={setName}
             error={show(validName) ? "Escribe nombre y apellido." : undefined}
           />
@@ -432,6 +428,8 @@ export function SubscriptionForm({
         {startChoice === "other" && (
           <DateField
             label="Fecha de inicio"
+            // A new period never starts in the past; a correction may keep its original date.
+            minDate={edit ? undefined : today}
             value={otherDate}
             onChange={setOtherDate}
             error={show(!!start) ? "Elige la fecha de inicio." : undefined}
