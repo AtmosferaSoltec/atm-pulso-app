@@ -1,0 +1,32 @@
+<!doctype html><meta charset=utf-8><style>
+@font-face{font-family:M;font-weight:800;src:url(shots/m800.ttf)}
+@font-face{font-family:M;font-weight:500;src:url(shots/m500.ttf)}
+*{margin:0;box-sizing:border-box}
+body{overflow:hidden;font-family:M;position:relative;background:linear-gradient(150deg,#124f60 0%,#176B80 48%,#1fa89f 125%)}
+.ring{position:absolute;border:4px solid rgba(255,255,255,.12);border-radius:50%}
+.glow{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,0) 70%)}
+.safe{position:absolute;display:flex;align-items:center;justify-content:center}
+.icon{flex:none;border-radius:22.5%;box-shadow:0 40px 90px rgba(0,25,35,.4);overflow:hidden}
+.icon img{width:100%;height:100%;display:block}
+.name{color:#fff;font-weight:800;letter-spacing:-.03em;line-height:.95}
+.tag{color:rgba(255,255,255,.9);font-weight:500;line-height:1.25}
+</style>
+<div id=root></div>
+<script>
+const k=new URLSearchParams(location.search).get("k");
+const C={
+ header:{w:3840,h:1646,sx:1097,sy:493,sw:1646,sh:661,icon:430,gap:70,name:250,tag:78},
+ search:{w:3840,h:2560,sx:836,sy:765,sw:2168,sh:1030,icon:640,gap:100,name:360,tag:110}};
+const c=C[k];
+document.body.style.width=c.w+"px";document.body.style.height=c.h+"px";
+root.innerHTML=`
+<div class=ring style="width:${c.h*1.5}px;height:${c.h*1.5}px;right:-${c.h*.55}px;top:-${c.h*.5}px"></div>
+<div class=ring style="width:${c.h*1.0}px;height:${c.h*1.0}px;right:-${c.h*.28}px;top:-${c.h*.22}px"></div>
+<div class=ring style="width:${c.h*1.2}px;height:${c.h*1.2}px;left:-${c.h*.6}px;bottom:-${c.h*.7}px"></div>
+<div class=glow style="width:${c.h*1.1}px;height:${c.h*1.1}px;left:${c.w*.5-c.h*.55}px;top:${c.h*.5-c.h*.55}px"></div>
+<div class=safe style="left:${c.sx}px;top:${c.sy}px;width:${c.sw}px;height:${c.sh}px;gap:${c.gap}px">
+ <div class=icon style="width:${c.icon}px;height:${c.icon}px"><img src="shots/icon.png"></div>
+ <div><div class=name style="font-size:${c.name}px">Pulso</div>
+ <div class=tag style="font-size:${c.tag}px;margin-top:${c.gap*.35}px">Miembros y ventas<br>de tu gimnasio</div></div>
+</div>`;
+</script>

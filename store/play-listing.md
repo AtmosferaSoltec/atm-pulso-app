@@ -6,8 +6,9 @@
 - **Paquete:** com.atmosferast.pulso
 - **Categoría:** Empresa (Business)
 - **Tipo:** App, gratis
-- **Correo de contacto:** soporte@atmosferast.com (verificar que reciba correo)
+- **Correo de contacto:** atmosfera.soltec@gmail.com (el dominio atmosferast.com no tiene correo propio; este es el oficial de la web)
 - **Política de privacidad:** https://atmosferast.com/privacy
+- **Eliminación de datos:** https://atmosferast.com/data-deletion (una sola página para todos los sistemas; se pide por correo, sin formularios)
 
 ## Descripción breve (máx. 80)
 
@@ -41,7 +42,7 @@ La app pide inicio de sesión. Google necesita una cuenta de prueba **en producc
 
 - ¿Recopila o comparte datos? **Recopila: sí. Comparte: no.**
 - Cifrado en tránsito: **sí** (HTTPS).
-- ¿El usuario puede pedir que se borren sus datos? **Sí**, escribiendo al correo de contacto (las cuentas las crea el gimnasio; la app no permite crear cuentas).
+- ¿El usuario puede pedir que se borren sus datos? **Sí**, escribiendo al correo de contacto (página `/data-deletion`) (las cuentas las crea el gimnasio; la app no permite crear cuentas).
 - Tipos de datos recopilados (todos "necesarios para la funcionalidad de la app", no opcionales, sin publicidad ni analítica):
   - Información personal → **Nombre**, **Número de teléfono**, **Otra información** (número de documento): gestión de la cuenta y funcionalidad.
   - Información financiera → **Historial de compras**: funcionalidad (membresías y ventas del gimnasio).
