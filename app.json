@@ -9,14 +9,14 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.atmosferast.pulso",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.atmosferast.pulso",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#176B80",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -77,7 +77,8 @@
             "enableShrinkResourcesInReleaseBuilds": true
           }
         }
-      ]
+      ],
+      "./plugins/with-optional-camera.js"
     ],
     "experiments": {
       "typedRoutes": true,
