@@ -12,7 +12,8 @@
       "buildNumber": "4",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "deploymentTarget": "18.0"
     },
     "android": {
       "package": "com.atmosferast.pulso",
@@ -74,11 +75,12 @@
         {
           "android": {
             "enableMinifyInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "minSdkVersion": 29
           }
         }
       ],
-      "./plugins/with-optional-camera.js"
+      "./plugins/with-optional-hardware.js"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -169,6 +169,10 @@ Para probar antes, publicar en `--channel preview --environment preview` y abrir
 
 **R8 / ProGuard (desde 1.1.0):** `expo-build-properties` activa `enableMinifyInReleaseBuilds` y `enableShrinkResourcesInReleaseBuilds`. El `.aab` ya lleva el mapping (`BUNDLE-METADATA/com.android.tools.build.obfuscation/proguard.map`) y los símbolos nativos, así que Play Console desofusca los fallos sin subir nada a mano. Si una librería nueva falla solo en release, se agrega su regla en `extraProguardRules` del mismo plugin.
 
+**Versiones mínimas:** Android 10 (API 29, `expo-build-properties` → `android.minSdkVersion`) e iOS 18 (`ios.deploymentTarget`).
+
+**Hardware opcional:** `plugins/with-optional-hardware.js` marca cámara y pantalla vertical como `required="false"`; si no, Play esconde la app en tablets, Chromebooks y equipos sin cámara.
+
 **Permisos Android:** solo `CAMERA` (foto del comprobante). La galería usa el selector de fotos del sistema, sin permisos; `READ_MEDIA_*`, `READ/WRITE_EXTERNAL_STORAGE` y `RECORD_AUDIO` están en `android.blockedPermissions` para que Play no pida la declaración de fotos y videos.
 
 **Probar un release en un celular sin tocar producción:** `EXPO_PUBLIC_PULSO_API_URL=http://localhost:3011/api/v1 npx expo prebuild -p android --clean`, agregar `android:usesCleartextTraffic="true"` al `<application>` del manifest generado (solo para esta prueba local), `cd android && ./gradlew :app:assembleRelease`, `adb reverse tcp:3011 tcp:3011 && adb reverse tcp:3130 tcp:3130` e instalar `app/build/outputs/apk/release/app-release.apk` (antes desinstalar la versión de Play: la firma es otra). Borrar `android/` al terminar.
