@@ -171,6 +171,8 @@ Para probar antes, publicar en `--channel preview --environment preview` y abrir
 
 **Versiones mínimas:** Android 10 (API 29, `expo-build-properties` → `android.minSdkVersion`) e iOS 18 (`ios.deploymentTarget`).
 
+**Cámara propia (desde 1.2.0):** `src/app/(staff)/camera.tsx` (expo-camera, CameraX en Android): solo cámara trasera, flash, zoom con dos dedos, obturador, botón de galería (selector de fotos del sistema, sin permiso de galería) y confirmación «Repetir / Usar foto». Se abre desde cualquier pantalla con `await capturePhoto()` (`src/state/photo-capture.ts`), que devuelve la foto ya achicada (`src/lib/photo.ts`) o `null`.
+
 **Hardware opcional:** `plugins/with-optional-hardware.js` marca cámara y pantalla vertical como `required="false"`; si no, Play esconde la app en tablets, Chromebooks y equipos sin cámara.
 
 **Permisos Android:** solo `CAMERA` (foto del comprobante). La galería usa el selector de fotos del sistema, sin permisos; `READ_MEDIA_*`, `READ/WRITE_EXTERNAL_STORAGE` y `RECORD_AUDIO` están en `android.blockedPermissions` para que Play no pida la declaración de fotos y videos.
