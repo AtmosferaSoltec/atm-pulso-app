@@ -6,7 +6,7 @@
 - **Paquete:** com.atmosferast.pulso
 - **Categoría:** Empresa (Business)
 - **Tipo:** App, gratis
-- **Correo de contacto:** atmosfera.soltec@gmail.com (el dominio atmosferast.com no tiene correo propio; este es el oficial de la web)
+- **Correo de contacto:** soporte@atmosferast.com
 - **Política de privacidad:** https://atmosferast.com/privacy
 - **Eliminación de datos:** https://atmosferast.com/data-deletion (una sola página para todos los sistemas; se pide por correo, sin formularios)
 

@@ -66,7 +66,7 @@ Primera versión de Pulso para iPhone.
 ```
 Pulso is an app for gym staff. Sign in with the document number and password provided above (fields "Documento" and "Contraseña"), then tap "Entrar". No two-factor step is needed. The account is an administrator of a demo gym with sample members and products. Try: tap a member and "Renovar" to renew; "Nuevo miembro" to register one; "Venta rápida" to sell products. The app is in Spanish. Accounts are created by the gym administrator from the web console, so the app has no sign-up screen and therefore no in-app account deletion; deletion is requested by email at https://atmosferast.com/data-deletion.
 ```
-- **Contacto de revisión:** tu nombre, teléfono y atmosfera.soltec@gmail.com.
+- **Contacto de revisión:** tu nombre, teléfono y soporte@atmosferast.com.
 
 ## Clasificación por edad
 
