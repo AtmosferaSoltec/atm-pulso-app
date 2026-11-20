@@ -210,6 +210,15 @@ export interface Product {
   price: Money;
   is_active: boolean;
   position: number;
+  category_id: Uuid | null;
+  category: Named | null;
+}
+
+/** Groups products for the sale filters (Batidos, Suplementos…). Each gym defines its own. */
+export interface ProductCategory {
+  id: Uuid;
+  name: string;
+  position: number;
 }
 
 export type ProductSaleStatus = "paid" | "pending";

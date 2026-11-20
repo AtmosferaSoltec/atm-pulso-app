@@ -3,9 +3,9 @@ import { View } from "react-native";
 
 import {
   Avatar,
-  BottomSheet,
   Button,
   Chips,
+  ConfirmDialog,
   Screen,
   Text,
 } from "@/components/ui";
@@ -52,7 +52,7 @@ export default function Profile() {
       <Button
         title="Cerrar sesión"
         icon="log-out-outline"
-        variant="secondary"
+        variant="danger"
         onPress={() => setLogout(true)}
       />
       {__DEV__ && lab && (
@@ -91,13 +91,18 @@ export default function Profile() {
           />
         </View>
       )}
-      <BottomSheet
+      <ConfirmDialog
         visible={logout}
-        onClose={() => setLogout(false)}
         title="¿Cerrar sesión?"
-      >
-        <Button title="Cerrar sesión" variant="danger" onPress={signOut} />
-      </BottomSheet>
+        message="Para volver a entrar necesitarás tu documento y contraseña."
+        confirmLabel="Cerrar sesión"
+        destructive
+        onConfirm={() => {
+          setLogout(false);
+          void signOut();
+        }}
+        onCancel={() => setLogout(false)}
+      />
     </Screen>
   );
 }

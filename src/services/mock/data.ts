@@ -4,6 +4,7 @@ import type {
   MemberDetail,
   MembershipPlan,
   Product,
+  ProductCategory,
   User,
 } from "@/types";
 import type { Scenario, SessionSnapshot } from "../types";
@@ -198,16 +199,30 @@ export function members(gymId: string, scenario: Scenario): MemberDetail[] {
   });
 }
 
-export const products: Product[] = [
-  ["Batido", "8.00"],
-  ["Agua", "2.50"],
-  ["Gaseosa", "3.50"],
-  ["Barra de proteína", "6.00"],
-  ["Toalla", "15.00"],
-].map(([name, price], position) => ({
-  id: `product-${position}`,
-  name,
-  price,
-  is_active: true,
-  position,
-}));
+export const productCategories: ProductCategory[] = [
+  { id: "category-0", name: "Batidos", position: 0 },
+  { id: "category-1", name: "Bebidas", position: 1 },
+  { id: "category-2", name: "Accesorios", position: 2 },
+];
+
+export const products: Product[] = (
+  [
+    ["Batido de proteína", "8.00", 0],
+    ["Batido verde", "9.00", 0],
+    ["Agua", "2.50", 1],
+    ["Gaseosa", "3.50", 1],
+    ["Barra de proteína", "6.00", null],
+    ["Toalla", "15.00", 2],
+  ] as const
+).map(([name, price, category], position) => {
+  const group = category === null ? null : productCategories[category];
+  return {
+    id: `product-${position}`,
+    name,
+    price,
+    is_active: true,
+    position,
+    category_id: group?.id ?? null,
+    category: group ? { id: group.id, name: group.name } : null,
+  };
+});

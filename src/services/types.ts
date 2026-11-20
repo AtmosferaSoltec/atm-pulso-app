@@ -12,6 +12,7 @@ import type {
   NewProductSale,
   PeriodChanges,
   Product,
+  ProductCategory,
   ProductSale,
   RenewMember,
   Sale,
@@ -75,6 +76,8 @@ export interface MembersService {
 export interface SalesService {
   /** Active products, in catalog order. */
   products(): Promise<Product[]>;
+  /** The gym's product categories, in order. Empty when it has none. */
+  categories(): Promise<ProductCategory[]>;
   /** Paid now, or left pending for a member (`status: "pending"`). Idempotent by `id`. */
   sell(input: NewProductSale): Promise<ProductSale>;
   pending(memberId: string): Promise<MemberPending>;

@@ -4,6 +4,7 @@ import type {
   MemberList,
   MemberPending,
   Product,
+  ProductCategory,
   ProductSale,
   MemberDetail,
   MembershipPlan,
@@ -153,7 +154,22 @@ export const realServices: Services = {
     async products() {
       return (await api<{ data: Product[] }>("/products")).data
         .filter((p) => p.is_active)
+        .map((p) => ({
+          ...p,
+          category_id: p.category_id ?? null,
+          category: p.category ?? null,
+        }))
         .sort((a, b) => a.position - b.position);
+    },
+    async categories() {
+      // Filters only: a server without categories yet must not block selling.
+      try {
+        return (
+          await api<{ data: ProductCategory[] }>("/product-categories")
+        ).data;
+      } catch {
+        return [];
+      }
     },
     async sell(input) {
       return (

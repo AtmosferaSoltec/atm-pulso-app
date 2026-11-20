@@ -62,8 +62,8 @@ export function Button({
         {
           backgroundColor: bg,
           borderRadius: radius.md,
-          borderWidth: variant === "secondary" ? 1 : 0,
-          borderColor: colors.border,
+          borderWidth: variant === "secondary" || variant === "danger" ? 1 : 0,
+          borderColor: variant === "danger" ? colors.danger : colors.border,
           opacity: off ? 0.5 : state.pressed ? 0.8 : 1,
           alignSelf: fullWidth ? "stretch" : "flex-start",
         },

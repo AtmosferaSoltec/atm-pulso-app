@@ -2,6 +2,7 @@ export * from "./Avatar";
 export * from "./BottomSheet";
 export * from "./Button";
 export * from "./Chips";
+export * from "./ConfirmDialog";
 export * from "./Icon";
 export * from "./Input";
 export * from "./Screen";

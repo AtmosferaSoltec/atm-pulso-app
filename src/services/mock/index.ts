@@ -10,7 +10,12 @@ import type {
   Sale,
 } from "@/types";
 import type { MockLab, Services } from "../types";
-import { members as seedMembers, products, session } from "./data";
+import {
+  members as seedMembers,
+  productCategories,
+  products,
+  session,
+} from "./data";
 
 const delay = <T>(fn: () => T): Promise<T> =>
   new Promise((resolve, reject) =>
@@ -296,6 +301,8 @@ export const mockServices: Services = {
   },
   sales: {
     products: () => delay(() => (requireFeature("sales"), products)),
+    categories: () =>
+      delay(() => (requireFeature("sales"), productCategories)),
     sell: (input) =>
       delay(() => {
         requireFeature("sales");

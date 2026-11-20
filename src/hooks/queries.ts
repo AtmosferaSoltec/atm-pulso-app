@@ -139,6 +139,13 @@ export function useProducts() {
   return useAsync(() => services.sales.products(), [gym]);
 }
 
+/** The gym's product categories (module `sales`); empty when it has none. */
+export function useProductCategories() {
+  const { user } = useSession();
+  const gym = user?.gym.id ?? "";
+  return useAsync(() => services.sales.categories(), [gym]);
+}
+
 /** What a member owes (module `sales`). Reloads after any sale or collection. */
 export function usePendingSales(memberId: string) {
   const { user, dataVersion } = useSession();

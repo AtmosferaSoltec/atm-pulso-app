@@ -136,7 +136,8 @@ export default function Login() {
           )}
         </View>
       </View>
-      <View style={{ gap: 8, paddingBottom: 16 }}>
+      {/* paddingTop keeps the button off the last field when the keyboard squeezes the screen. */}
+      <View style={{ gap: 8, paddingTop: 24, paddingBottom: 16 }}>
         {(error || notice) && (
           <Text tone="danger" accessibilityLiveRegion="polite">
             {error ?? notice}
