@@ -7,10 +7,11 @@ export const spacing = {
   xxl: 32,
   xxxl: 48,
 } as const;
-export const radius = { sm: 8, md: 10, lg: 14, pill: 999 } as const;
+export const radius = { sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, pill: 999 } as const;
 
-/** Compact scale: no display sizes. The largest text in the app is `title`. */
+/** Compact scale. `display` is used once: the home's title on the brand canvas. */
 export const typography = {
+  display: { fontSize: 30, lineHeight: 36, fontWeight: "700" },
   title: { fontSize: 20, lineHeight: 26, fontWeight: "700" },
   heading: { fontSize: 16, lineHeight: 22, fontWeight: "600" },
   body: { fontSize: 15, lineHeight: 21, fontWeight: "400" },

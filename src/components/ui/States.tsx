@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { mix } from "@/theme/color";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ApiError } from "@/types";
 
@@ -16,7 +17,7 @@ import { Button } from "./Button";
 import { Icon, type IconName } from "./Icon";
 import { Text } from "./Text";
 
-/** Compact message block: small icon, one line of title, one of help. */
+/** Message block: the icon in a soft brand disc, one line of title, one of help. */
 function Message({
   icon,
   title,
@@ -30,9 +31,30 @@ function Message({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={{ alignItems: "center", gap: 6, paddingVertical: 32 }}>
-      <Icon name={icon} size={24} color={colors.textMuted} />
-      <Text variant="heading" style={{ textAlign: "center" }}>
+    <View
+      style={{
+        alignItems: "center",
+        gap: 6,
+        paddingVertical: 36,
+        paddingHorizontal: 24,
+      }}
+    >
+      <View
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 32,
+          marginBottom: 10,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.brandSoft,
+          borderWidth: 6,
+          borderColor: mix(colors.brand, colors.background, 0.05),
+        }}
+      >
+        <Icon name={icon} size={26} color={colors.brand} />
+      </View>
+      <Text variant="heading" style={{ textAlign: "center", fontSize: 17 }}>
         {title}
       </Text>
       {message ? (
@@ -104,9 +126,18 @@ export function ErrorState({
   );
 }
 
-/** Placeholder rows shaped like the real list rows; a soft pulse, none with reduced motion. */
-export function SkeletonList({ rows = 6 }: { rows?: number }) {
-  const { colors } = useTheme();
+/**
+ * Placeholders shaped like the real content: `rows` (plain list rows) or `cards` (the home's member cards).
+ * A soft pulse, none with reduced motion.
+ */
+export function SkeletonList({
+  rows = 6,
+  variant = "rows",
+}: {
+  rows?: number;
+  variant?: "rows" | "cards";
+}) {
+  const { colors, radius } = useTheme();
   const reduce = useReducedMotion();
   const opacity = useSharedValue(1);
   useEffect(() => {
@@ -115,12 +146,13 @@ export function SkeletonList({ rows = 6 }: { rows?: number }) {
     return () => cancelAnimation(opacity);
   }, [reduce, opacity]);
   const pulse = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  const cards = variant === "cards";
   const bar = (width: number | `${number}%`, height: number) => (
     <View
       style={{
         width,
         height,
-        borderRadius: 4,
+        borderRadius: height / 2,
         backgroundColor: colors.surfaceAlt,
       }}
     />
@@ -130,24 +162,37 @@ export function SkeletonList({ rows = 6 }: { rows?: number }) {
       {Array.from({ length: rows }, (_, i) => (
         <View
           key={i}
-          style={{
-            height: 60,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 12,
-          }}
+          style={
+            cards
+              ? {
+                  height: 76,
+                  marginBottom: 10,
+                  paddingHorizontal: 14,
+                  borderRadius: radius.xl,
+                  backgroundColor: colors.surface,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                }
+              : {
+                  height: 60,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                }
+          }
         >
           <View
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
+              width: cards ? 48 : 40,
+              height: cards ? 48 : 40,
+              borderRadius: 24,
               backgroundColor: colors.surfaceAlt,
             }}
           />
-          <View style={{ flex: 1, gap: 6 }}>
-            {bar("55%", 12)}
-            {bar("35%", 10)}
+          <View style={{ flex: 1, gap: 8 }}>
+            {bar(i % 2 ? "62%" : "50%", 12)}
+            {bar(i % 3 ? "36%" : "44%", 10)}
           </View>
         </View>
       ))}

@@ -37,6 +37,8 @@ export function Text({
                 ? "Manrope_500Medium"
                 : "Manrope_700Bold",
           fontWeight: undefined,
+          letterSpacing:
+            variant === "display" ? -0.6 : variant === "title" ? -0.3 : undefined,
         },
         style,
       ]}

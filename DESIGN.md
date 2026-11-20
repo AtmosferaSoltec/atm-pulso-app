@@ -7,10 +7,10 @@ Maqueta móvil interna para el personal del gimnasio (roles `admin` y `reception
 | Pantalla | Ruta | Acción principal |
 | --- | --- | --- |
 | Entrar | `(auth)/index` | DNI + contraseña; si la clave debe cambiarse, pide una nueva en la misma pantalla |
-| Miembros (inicio) | `(staff)/index` | Buscar por nombre/DNI/CE, filtrar, abrir ficha. Botón flotante **Nuevo** |
+| Miembros (inicio) | `(staff)/index` | Buscar por nombre/DNI/CE, filtrar, abrir ficha. Abajo, al pulgar: **Venta rápida** y **Nuevo miembro** |
 | Ficha | `(staff)/members/[id]` | **Renovar** (barra inferior), **Llamar** (`tel:`) y **WhatsApp** (`https://wa.me/51…`). Tocar un periodo vigente lo corrige |
 | Renovar / Modificar | `(staff)/members/[id]/subscription` | Renovar, o `mode=edit` para corregir un periodo que no terminó |
-| Venta rápida (módulo `sales`) | `(staff)/sale` | Tocar productos suma 1; **Cobrar** (elige método) o **Dejar pendiente** (requiere miembro). Se abre con el botón **Vender**, junto a «Nuevo» |
+| Venta rápida (módulo `sales`) | `(staff)/sale` | Tocar productos suma 1; **Cobrar** (elige método) o **Dejar pendiente** (requiere miembro). Se abre con **Venta rápida**, junto a «Nuevo miembro» |
 | Nuevo miembro | `(staff)/members/new` | Datos del miembro + primera suscripción, en una sola pantalla |
 | Perfil | `(staff)/profile` | Tema y cerrar sesión (y laboratorio de escenarios en `__DEV__`) |
 
@@ -18,9 +18,21 @@ Una sola lista en toda la app. El atajo «por vencer» es el chip **Por vencer N
 
 ## Principios aplicados
 
-1. **Densidad cómoda.** Filas de lista de 60 px (avatar 40, nombre completo, «Vence en N días · DNI»). Sin chip de estado: la frase es el estado y solo lleva color cuando pide atención (por vencer ámbar, vencido rojo, programado azul). Nada de tarjetas grandes.
-2. **Encabezados pequeños.** El texto más grande es `title` (20 px). No hay tamaños de display ni cifras gigantes. Las pantallas internas usan el encabezado nativo con un título corto.
-3. **Una acción principal por pantalla**, siempre al alcance del pulgar: «Nuevo» flotante abajo a la derecha, «Renovar» fijo abajo en la ficha y el botón del formulario al final.
+**Lenguaje visual del inicio (lienzo de marca).** El inicio es la cara de la app y se diseña para impresionar sin añadir datos:
+
+- **Lienzo de marca arriba**: bloque con el color del gimnasio en degradado (nativo, `backgroundImage` de RN; sin dependencias), esquinas inferiores de 32 px y anillos concéntricos de «pulso» que se abren una vez al entrar. Sobre él, en blanco: logo o monograma en baldosa blanca, nombre del gimnasio (y sede si hay varias), avatar de perfil, la fecha de hoy como antetítulo y el título «Miembros» (30 px, el único tamaño `display` de la app). El color se oscurece (`deepen`, mismo tono) hasta que el blanco pase AA (4.6:1): un naranja se vuelve terracota, un teal o un negro quedan igual. La barra de estado va en claro solo mientras el inicio está enfocado.
+- **Búsqueda flotante**: campo blanco de 56 px que monta sobre el borde del lienzo, con sombra teñida de la marca. Al buscar, los filtros se cambian por «Buscando en todos los miembros».
+- **Filtros**: chips de 40 px; «Por vencer» y «Vencidos» llevan su número en una pastilla ámbar/roja (la única cifra de la pantalla).
+- **Miembros como tarjetas** de 76 px (radio 20, sombra suave): avatar de 44 con color propio por nombre (el mismo en la ficha y el perfil), nombre en la primera línea entera y, debajo, el estado. Si pide atención, el estado es una pastilla de color con punto y el avatar lleva un anillo del mismo color (por vencer ámbar, vencido rojo, programado azul); si está activo, texto gris tranquilo.
+- **Acciones al pulgar**: «Venta rápida» (blanca) y «Nuevo miembro» (color de marca) fijas abajo sobre un velo que desvanece la lista. Al bajar, una barra compacta con el gimnasio y una lupa (vuelve arriba y enfoca la búsqueda) reemplaza al lienzo.
+- **Movimiento** en el hilo de UI (Reanimated): las primeras tarjetas entran escalonadas, todo lo tocable se hunde un poco con un resorte (`PressableScale`), háptica al cambiar de filtro y en las dos acciones. Con «reducir movimiento» no hay escalas ni entradas.
+- **Sin cifras**: nada de KPIs, totales, ingresos ni resúmenes; los números van en la web.
+
+Resto de la app:
+
+1. **Densidad cómoda.** Fuera del inicio, filas de 60 px; la frase es el estado y solo lleva color cuando pide atención.
+2. **Encabezados pequeños.** Las pantallas internas usan el encabezado nativo con un título corto (`title`, 20 px). `display` solo existe en el inicio.
+3. **Una acción principal por pantalla**, siempre al alcance del pulgar: las dos del inicio, «Renovar» fijo abajo en la ficha y el botón del formulario al final.
 4. **Formularios cortos y ya rellenados.**
    - Duración en chips (1, 3, 6 y 12 meses, y «Otro» para 1–24).
    - El **monto se rellena con el precio del gimnasio** para esa duración (`Gym.membership_prices`) y se puede editar.
@@ -28,10 +40,10 @@ Una sola lista en toda la app. El atajo «por vencer» es el chip **Por vencer N
    - El fin no se escribe: es una línea de vista previa («Del … al …»).
    - El pago es un chip, con Yape/Plin por defecto. El documento es DNI/CE junto al número.
    - Cada campo usa el teclado correcto (numérico, teléfono, decimal) y se valida al enviar, con mensajes de una línea.
-5. **Nada decorativo.** Sin heros, ilustraciones, gradientes, sombras grandes, métricas ni frases de marketing. Los íconos solo están donde informan o son el control.
-6. **Táctil sin inflar.** Botones de 48 px, chips de 40 px con área extendida a 48, filas de 60 px y avatar de perfil con `hitSlop`.
-7. **Identidad sobria por gimnasio.** El color de marca (`brand_color`) tiñe el fondo y las superficies y se usa en botones y chips seleccionados. Se muestra el logo o, si no hay, un monograma de 32 px junto al nombre del gimnasio. Las paletas de claro y oscuro son explícitas y cada estado lleva etiqueta, no solo color.
-8. **Movimiento mínimo.** Transiciones nativas del Stack, el pulso del esqueleto de carga (que se desactiva con «reducir movimiento») y háptica solo en botones primarios.
+5. **Decoración con propósito.** Solo el lienzo del inicio lleva degradado y anillos; el resto es superficie blanca, sombra suave teñida y radios de 12 (botones, campos), 16 y 20 (tarjetas). Sin ilustraciones ni frases de marketing.
+6. **Táctil sin inflar.** Botones de 48 px (56 en el inicio), chips de 40 px con área extendida a 48, filas de 60 px y perfil con área de 48.
+7. **Identidad por gimnasio.** El color de marca tiñe fondo, superficies, sombras, botones y chips seleccionados, y llena el lienzo del inicio. Cada estado lleva etiqueta, no solo color. Probado con teal `#176b80`, naranja `#e5602b` y casi negro `#1a1a1a`.
+8. **Movimiento con medida.** Transiciones nativas del Stack, el pulso del esqueleto de carga y los detalles del inicio; todo se desactiva o se reduce con «reducir movimiento».
 
 ## Gimnasio y sede: una sola regla
 
@@ -54,13 +66,13 @@ Laboratorio (`__DEV__`, en Perfil): escenarios «1 gym · 1 sede» (por defecto)
 - **«Nueva suscripción» separada de «Renovar»**: era la misma acción con otra fecha de inicio. Ahora hay un único «Renovar» y el inicio se elige con un chip.
 - **Formulario en 2 pasos**, el campo «Meses completos» duplicado con los chips, la fecha ISO escrita a mano, la tarjeta «Vista previa · fecha de fin» y la doble confirmación (revisar → confirmar vista previa).
 - **Perfil**: «Tu espacio.» a 36 px, «A tu manera», el pie de marca y el laboratorio en una tarjeta grande con botones de 48 px.
-- **Estados**: ícono de 88 px girado. Shimmer con gradiente: ahora son filas esqueleto con la forma real de la lista.
+- **Estados**: ícono de 88 px girado. Shimmer con gradiente: ahora son esqueletos con la forma real de la lista (tarjetas en el inicio) y un ícono de 26 px en un disco suave de la marca.
 - **Código y archivos sin uso**: `Card`, `ListItem`, `Row`, `SectionHeader`, `LoadingState`, `MethodPicker`, `Identity`, `MemberDirectory`, `SubscriptionEditor`, `useMutation`, `formatTime`, `DOC_LABEL`, variantes de texto `display`/`mono`, tamaño de botón `lg`, imágenes de plantilla (logos de React/Expo, `tabIcons`, `tutorial-web`, `logo-glow`) y las dependencias `expo-linear-gradient`, `expo-image`, `expo-device` y `expo-web-browser`. `expo-glass-effect`, `expo-symbols` y `@expo/ui` se mantienen porque `expo-router` los usa o los declara como pares.
 
 ## Estructura
 
 - `src/app/`: solo rutas y layouts (grupos `(auth)` y `(staff)`; el índice raíz redirige).
-- `src/components/`: `GymHeader` (identidad + selector condicional + acceso a perfil), `MemberRow`, `SubscriptionForm` (alta, renovación y modificación) y `ui/` (Avatar, BottomSheet, Button, Chips, Icon, Input, Screen, States, Text).
+- `src/components/`: `GymHeader` (identidad sobre el lienzo + selector condicional + acceso a perfil), `MemberRow` (tarjeta), `SearchField` (búsqueda del inicio y de la venta), `SubscriptionForm` (alta, renovación y modificación) y `ui/` (Avatar, BottomSheet, Button, Chips, Icon, Input, PressableScale, Screen, States, Text).
 - `src/hooks/queries.ts`: las pantallas leen datos solo con estos hooks.
 - `src/services/types.ts`: interfaces. `src/services/index.ts`: único punto de composición. `src/services/real/` (HTTP) y `src/services/mock/` (datos y latencia simulada): adaptadores que nunca importan las pantallas.
 - `src/types/`: contratos de dominio alineados con OpenAPI.
@@ -108,7 +120,7 @@ Un valor del entorno gana sobre `.env`: `EXPO_PUBLIC_API_MODE=mock npx expo star
 
 **Regla: si el gimnasio no tiene el módulo (`user.gym.features`, vía `useSession().hasFeature`), la app no muestra nada de él** (ni botón, ni bloque, ni llamadas). Con `FEATURE_DISABLED` el API responde 403, así que tampoco se consulta «por si acaso».
 
-- **Venta rápida** (`sales`): botón «Vender» en la lista (junto a «Nuevo») → lista compacta de productos activos (`GET /products`) con precio, tocar suma 1 y «−» resta (1–99). Total fijo abajo. Miembro opcional (hoja de búsqueda por nombre o documento). «Cobrar» abre una hoja con el método (efectivo, Yape/Plin, tarjeta, transferencia; recuerda el último en memoria, `state/last-method.ts`); «Dejar pendiente» solo aparece cuando hay un miembro elegido. Nunca se envía precio. Idempotente: un UUID por intento (se renueva si cambia el carrito, el miembro o el método; un reintento igual no duplica). Sede: la activa; solo se pregunta si hay más de una. Tras vender, aviso verde breve, carrito vacío y sin miembro (la siguiente venta suele ser de otra persona).
+- **Venta rápida** (`sales`): botón «Venta rápida» en el inicio (junto a «Nuevo miembro») → lista compacta de productos activos (`GET /products`) con precio, tocar suma 1 y «−» resta (1–99). Total fijo abajo. Miembro opcional (hoja de búsqueda por nombre o documento). «Cobrar» abre una hoja con el método (efectivo, Yape/Plin, tarjeta, transferencia; recuerda el último en memoria, `state/last-method.ts`); «Dejar pendiente» solo aparece cuando hay un miembro elegido. Nunca se envía precio. Idempotente: un UUID por intento (se renueva si cambia el carrito, el miembro o el método; un reintento igual no duplica). Sede: la activa; solo se pregunta si hay más de una. Tras vender, aviso verde breve, carrito vacío y sin miembro (la siguiente venta suele ser de otra persona).
 - **Pendiente de cobro** (`sales`): en la ficha, bloque con el saldo y el detalle (productos × cantidad, día) solo si el miembro debe algo (`GET /members/{id}/pending-sales`). «Cobrar» abre una hoja con las ventas marcadas (se pueden desmarcar; se cobran enteras, todo o nada) y el método. `SALE_NOT_PENDING`/`NOTHING_TO_COLLECT` refrescan el bloque. La palabra «fiado» no se usa. No hay lista de compras recientes en la app.
 - **Peso** (`body_tracking`): no está en la app (solo lo diario: buscar, vender, renovar, registrar). Se registra y consulta en la web.
 - Mock: Atlas Fitness tiene ambos módulos; Titan Studio ninguno (para comprobar que no se ve nada).

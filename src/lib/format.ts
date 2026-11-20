@@ -133,3 +133,18 @@ export function formatShortDay(iso: string): string {
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(new Date(iso));
   return formatDate(day).slice(0, -5);
 }
+
+const WEEKDAYS_LONG = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const MONTHS_LONG = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+/** Today in Lima as "Viernes 20 de noviembre" (no Intl names: Hermes may lack the locale data). */
+export function todayLong(): string {
+  const [y, m, d] = todayLima().split("-").map(Number);
+  const weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  return `${WEEKDAYS_LONG[weekday]} ${d} de ${MONTHS_LONG[m - 1]}`;
+}
+
+/** First name for a greeting: "María Fernanda López" -> "María". */
+export function firstName(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] ?? "";
+}

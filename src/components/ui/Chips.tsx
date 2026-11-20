@@ -1,5 +1,8 @@
 import { Pressable, ScrollView, View } from "react-native";
 
+import * as Haptics from "expo-haptics";
+
+import { alpha } from "@/theme/color";
 import { useTheme } from "@/theme/ThemeProvider";
 
 import { Text } from "./Text";
@@ -8,6 +11,8 @@ export interface ChipOption<T extends string> {
   value: T;
   label: string;
   count?: number;
+  /** Colours the count when it asks for attention (por vencer, vencidos). */
+  tone?: "warning" | "danger";
 }
 
 /**
@@ -28,6 +33,13 @@ export function Chips<T extends string>({
   const { colors, radius } = useTheme();
   const items = options.map((o) => {
     const selected = o.value === value;
+    const badge = selected
+      ? { bg: alpha(colors.onBrand, 0.2), fg: colors.onBrand }
+      : o.tone === "danger"
+        ? { bg: colors.dangerSoft, fg: colors.danger }
+        : o.tone === "warning"
+          ? { bg: colors.warningSoft, fg: colors.warning }
+          : { bg: colors.surfaceAlt, fg: colors.textMuted };
     return (
       <Pressable
         key={o.value}
@@ -36,19 +48,24 @@ export function Chips<T extends string>({
         accessibilityLabel={
           o.count !== undefined ? `${o.label}, ${o.count}` : o.label
         }
-        onPress={() => onChange(o.value)}
+        onPress={() => {
+          if (!selected) void Haptics.selectionAsync().catch(() => {});
+          onChange(o.value);
+        }}
         hitSlop={{ top: 4, bottom: 4 }}
-        style={{
+        style={({ pressed }) => ({
           flexDirection: "row",
           alignItems: "center",
-          gap: 6,
-          paddingHorizontal: 12,
+          gap: 7,
+          paddingLeft: 14,
+          paddingRight: o.count !== undefined ? 6 : 14,
           height: 40,
           borderRadius: radius.pill,
           backgroundColor: selected ? colors.brand : colors.surface,
           borderWidth: 1,
           borderColor: selected ? colors.brand : colors.border,
-        }}
+          opacity: pressed ? 0.85 : 1,
+        })}
       >
         <Text
           variant="label"
@@ -57,12 +74,29 @@ export function Chips<T extends string>({
           {o.label}
         </Text>
         {o.count !== undefined && (
-          <Text
-            variant="caption"
-            style={{ color: selected ? colors.onBrand : colors.textMuted }}
+          <View
+            style={{
+              minWidth: 26,
+              height: 26,
+              paddingHorizontal: 7,
+              borderRadius: 13,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: badge.bg,
+            }}
           >
-            {o.count}
-          </Text>
+            <Text
+              variant="caption"
+              style={{
+                color: badge.fg,
+                fontFamily: "Manrope_700Bold",
+                fontSize: 12,
+                lineHeight: 16,
+              }}
+            >
+              {o.count}
+            </Text>
+          </View>
         )}
       </Pressable>
     );
@@ -72,8 +106,13 @@ export function Chips<T extends string>({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
-        style={{ marginHorizontal: -16, flexGrow: 0 }}
+        accessibilityRole="radiogroup"
+        contentContainerStyle={{
+          gap: 8,
+          paddingHorizontal: 16,
+          paddingVertical: 6,
+        }}
+        style={{ marginHorizontal: -16, marginVertical: -6, flexGrow: 0 }}
       >
         {items}
       </ScrollView>

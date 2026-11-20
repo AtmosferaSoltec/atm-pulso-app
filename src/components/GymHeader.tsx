@@ -8,8 +8,17 @@ import { useTheme } from "@/theme/ThemeProvider";
 
 import { Avatar, BottomSheet, Icon, Text } from "./ui";
 
-/** Gym logo, or its initials on the brand color when there is no logo. */
-export function GymMark({ size = 32 }: { size?: number }) {
+/**
+ * Gym logo, or its initials. `onCanvas` is the white tile used on the brand canvas of the home; otherwise the
+ * initials sit on the brand colour.
+ */
+export function GymMark({
+  size = 32,
+  onCanvas = false,
+}: {
+  size?: number;
+  onCanvas?: boolean;
+}) {
   const { user } = useSession();
   const { colors } = useTheme();
   const name = user?.gym.name ?? "";
@@ -18,11 +27,12 @@ export function GymMark({ size = 32 }: { size?: number }) {
       style={{
         width: size,
         height: size,
-        borderRadius: size * 0.28,
-        backgroundColor: colors.brand,
+        borderRadius: size * 0.3,
+        backgroundColor: onCanvas ? "#ffffff" : colors.brand,
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
+        boxShadow: onCanvas ? "0px 4px 12px rgba(0,0,0,0.18)" : undefined,
       }}
     >
       {user?.gym.logo_url ? (
@@ -34,7 +44,11 @@ export function GymMark({ size = 32 }: { size?: number }) {
       ) : (
         <Text
           variant="label"
-          style={{ color: colors.onBrand, fontSize: size * 0.4 }}
+          style={{
+            color: onCanvas ? colors.brandDeep : colors.onBrand,
+            fontSize: size * 0.38,
+            lineHeight: size * 0.5,
+          }}
         >
           {initials(name)}
         </Text>
@@ -75,7 +89,7 @@ function OptionRow({
 }
 
 /**
- * Home header: gym identity on the left, profile on the right.
+ * Home identity, drawn on the brand canvas (white text): gym on the left, profile on the right.
  * Gym and branch are only shown/selectable when the user has more than one.
  */
 export function GymHeader() {
@@ -88,7 +102,6 @@ export function GymHeader() {
     switchGym,
     pending,
   } = useSession();
-  const { colors } = useTheme();
   const [picker, setPicker] = useState<"gym" | "branch" | null>(null);
   const [switchError, setSwitchError] = useState<string | undefined>();
   const switchable = visibility.showGym || visibility.showBranch;
@@ -97,11 +110,11 @@ export function GymHeader() {
       style={{
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
-        height: 52,
+        gap: 12,
+        minHeight: 52,
       }}
     >
-      <GymMark />
+      <GymMark size={42} onCanvas />
       <Pressable
         disabled={!switchable}
         accessibilityRole={switchable ? "button" : "header"}
@@ -111,18 +124,31 @@ export function GymHeader() {
             : user?.gym.name
         }
         onPress={() => setPicker(visibility.showGym ? "gym" : "branch")}
-        style={{ flex: 1, minHeight: 44, justifyContent: "center" }}
+        style={({ pressed }) => ({
+          flex: 1,
+          minHeight: 48,
+          justifyContent: "center",
+          opacity: pressed ? 0.7 : 1,
+        })}
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-          <Text variant="heading" numberOfLines={1} style={{ flexShrink: 1 }}>
+          <Text
+            variant="heading"
+            numberOfLines={1}
+            style={{ flexShrink: 1, color: "#ffffff", fontSize: 17 }}
+          >
             {user?.gym.name}
           </Text>
           {switchable && (
-            <Icon name="chevron-down" size={16} color={colors.textMuted} />
+            <Icon name="chevron-down" size={16} color="rgba(255,255,255,0.8)" />
           )}
         </View>
         {visibility.showBranch && (
-          <Text variant="caption" tone="muted" numberOfLines={1}>
+          <Text
+            variant="caption"
+            numberOfLines={1}
+            style={{ color: "#ffffff" }}
+          >
             Sede {activeBranch?.name}
           </Text>
         )}
@@ -131,10 +157,20 @@ export function GymHeader() {
         accessibilityRole="button"
         accessibilityLabel="Perfil"
         onPress={() => router.push("/profile")}
-        hitSlop={6}
-        style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        hitSlop={4}
+        style={({ pressed }) => ({
+          width: 48,
+          height: 48,
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: pressed ? 0.7 : 1,
+        })}
       >
-        <Avatar name={user?.full_name ?? ""} size={36} />
+        <Avatar
+          name={user?.full_name ?? ""}
+          size={38}
+          ring="rgba(255,255,255,0.4)"
+        />
       </Pressable>
       <BottomSheet
         visible={picker !== null}

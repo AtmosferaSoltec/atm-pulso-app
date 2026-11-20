@@ -50,3 +50,32 @@ export function onColor(hex: string): string {
   const darkContrast = (luminance(hex) + 0.05) / (luminance("#11151a") + 0.05);
   return lightContrast >= darkContrast ? "#ffffff" : "#11151a";
 }
+
+/** WCAG contrast ratio between two colours. */
+export function contrast(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/**
+ * The brand, deepened until white text clears WCAG AA (4.6:1), so the hue stays as vivid as it can.
+ * Dark brands come back untouched; light ones (orange, yellow…) get darker but keep their hue. Used for the
+ * home's brand canvas.
+ */
+export function deepen(hex: string): string {
+  // Darken towards a deep shade of the same hue, not grey, so oranges stay orange instead of turning brown.
+  const ink = mix(hex, "#000000", 0.3);
+  let w = 1;
+  let out = normalizeHex(hex);
+  while (contrast(out, "#ffffff") < 4.6 && w > 0.2) {
+    w -= 0.04;
+    out = mix(hex, ink, w);
+  }
+  return out;
+}
+
+/** `#rrggbb` + alpha (0..1) as `rgba()`, for tinted shadows and translucent layers. */
+export function alpha(hex: string, a: number): string {
+  const [r, g, b] = rgb(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}

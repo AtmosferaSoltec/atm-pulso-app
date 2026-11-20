@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { FlatList, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { SearchField } from "@/components/SearchField";
 import {
   Button,
   Chips,
   EmptyState,
   ErrorState,
   Icon,
-  Input,
   SkeletonList,
   Text,
 } from "@/components/ui";
@@ -85,41 +85,13 @@ export default function SaleCatalog() {
           </Text>
         </View>
       )}
-      <View>
-        <Input
-          accessibilityLabel="Buscar producto"
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Buscar producto"
-          returnKeyType="search"
-          autoCorrect={false}
-          style={{ paddingLeft: 42, paddingRight: 44 }}
-        />
-        <View
-          pointerEvents="none"
-          style={{ position: "absolute", left: 14, top: 14 }}
-        >
-          <Icon name="search-outline" size={20} color={colors.textMuted} />
-        </View>
-        {search.length > 0 && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Borrar búsqueda"
-            onPress={() => setSearch("")}
-            style={{
-              position: "absolute",
-              right: 2,
-              top: 2,
-              width: 44,
-              height: 44,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Icon name="close-circle" size={20} color={colors.textMuted} />
-          </Pressable>
-        )}
-      </View>
+      <SearchField
+        elevated={false}
+        accessibilityLabel="Buscar producto"
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Buscar producto"
+      />
       {!query && groups.length > 0 && (
         <Chips
           scroll

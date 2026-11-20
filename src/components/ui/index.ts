@@ -8,3 +8,4 @@ export * from "./Input";
 export * from "./Screen";
 export * from "./States";
 export * from "./Text";
+export * from "./PressableScale";
