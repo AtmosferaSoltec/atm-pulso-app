@@ -1,4 +1,6 @@
-import { Image, Pressable, View } from "react-native";
+import { useState } from "react";
+import { Image, Modal, Pressable, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { services, type ProofFile, type ProofOwner } from "@/services";
 import { capturePhoto } from "@/state/photo-capture";
@@ -51,9 +53,12 @@ export function PaymentProof({
   onChange: (photos: ProofFile[]) => void;
 }) {
   const { colors, radius } = useTheme();
+  const insets = useSafeAreaInsets();
   const photo = photos[0];
+  const [viewing, setViewing] = useState(false);
 
-  async function open() {
+  async function take() {
+    setViewing(false);
     const taken = await capturePhoto();
     if (taken) onChange([taken]);
   }
@@ -69,9 +74,10 @@ export function PaymentProof({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={
-          photo ? "Cambiar la foto del comprobante" : "Tomar foto del comprobante"
+          photo ? "Ver la foto del comprobante" : "Tomar foto del comprobante"
         }
-        onPress={() => void open()}
+        // With a photo the card opens it big; without one it opens the camera.
+        onPress={() => (photo ? setViewing(true) : void take())}
         style={({ pressed }) => ({
           flexDirection: "row",
           alignItems: "center",
@@ -115,7 +121,7 @@ export function PaymentProof({
             {photo ? "Foto del comprobante" : "Tomar foto del comprobante"}
           </Text>
           <Text variant="caption" tone="muted">
-            {photo ? "Toca para cambiarla" : "Yape/Plin, voucher o transferencia"}
+            {photo ? "Toca para verla" : "Yape/Plin, voucher o transferencia"}
           </Text>
         </View>
         {photo ? (
@@ -139,6 +145,92 @@ export function PaymentProof({
           <Icon name="chevron-forward" size={20} color={colors.textMuted} />
         )}
       </Pressable>
+      <Modal
+        visible={viewing && !!photo}
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setViewing(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: "#000" }}>
+          {photo && (
+            <Image
+              source={{ uri: photo.uri }}
+              accessibilityLabel="Foto del comprobante"
+              resizeMode="contain"
+              style={{ flex: 1 }}
+            />
+          )}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar"
+            hitSlop={8}
+            onPress={() => setViewing(false)}
+            style={{
+              position: "absolute",
+              top: insets.top + 8,
+              left: 16,
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0,0,0,0.45)",
+            }}
+          >
+            <Icon name="close" size={24} color="#fff" />
+          </Pressable>
+          <View
+            style={{
+              position: "absolute",
+              bottom: insets.bottom + 24,
+              left: 24,
+              right: 24,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setViewing(false);
+                onChange([]);
+              }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                paddingVertical: 12,
+                paddingHorizontal: 8,
+              }}
+            >
+              <Icon name="trash-outline" size={20} color="#fff" />
+              <Text variant="heading" style={{ color: "#fff" }}>
+                Quitar
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void take()}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                paddingVertical: 14,
+                paddingHorizontal: 22,
+                borderRadius: 999,
+                backgroundColor: colors.brand,
+                opacity: pressed ? 0.85 : 1,
+              })}
+            >
+              <Icon name="camera" size={20} color={colors.onBrand} />
+              <Text variant="heading" style={{ color: colors.onBrand }}>
+                Tomar otra
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

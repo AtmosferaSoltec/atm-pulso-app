@@ -20,6 +20,7 @@ import type {
   ApiError,
   DocumentType,
   MemberDetail,
+  MemberView,
   MembershipView,
   PaymentMethod,
   PeriodChanges,
@@ -33,7 +34,16 @@ import {
   proofSummary,
   uploadProofs,
 } from "./PaymentProof";
-import { BottomSheet, Button, Chips, Icon, Input, Screen, Text } from "./ui";
+import {
+  BottomSheet,
+  Button,
+  Chips,
+  ConfirmDialog,
+  Icon,
+  Input,
+  Screen,
+  Text,
+} from "./ui";
 
 function Field({
   label,
@@ -101,21 +111,39 @@ export function SubscriptionForm({
   const [doc, setDoc] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  // The name is looked up only when the magnifier is pressed (never while typing).
+  // Only the magnifier searches (never while typing): first the gym's own members, then RENIEC for a DNI.
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupNote, setLookupNote] = useState<string | undefined>();
-  const fullDni = enroll && docType === "dni" && /^\d{8}$/.test(doc);
-  async function searchDni() {
-    if (!fullDni || lookingUp) return;
+  const [existing, setExisting] = useState<MemberView | null>(null);
+  const fullDoc =
+    enroll &&
+    (docType === "dni" ? /^\d{8}$/.test(doc) : /^\d{9,12}$/.test(doc));
+  async function searchDocument() {
+    if (!fullDoc || lookingUp) return;
     Keyboard.dismiss();
     setLookingUp(true);
     setLookupNote(undefined);
     try {
+      // 1. Already a member of this gym? Then there is nothing to register: offer their card.
+      const same = (
+        await services.members.list({ search: doc, page_size: 10 })
+      ).data.find((m) => m.document_number === doc);
+      if (same) {
+        setExisting(same);
+        return;
+      }
+      // 2. A new person: fill the name from the identity service (DNI only).
+      if (docType !== "dni") {
+        setLookupNote("No está registrado en tu gimnasio. Completa sus datos.");
+        return;
+      }
       const found = await services.members.lookupDni(doc);
       if (found) setName(found);
       else setLookupNote("No encontramos ese DNI. Escribe el nombre a mano.");
     } catch {
-      setLookupNote("No se pudo buscar ahora. Escribe el nombre a mano.");
+      setLookupNote(
+        "No se pudo buscar ahora. Revisa tu conexión e intenta otra vez.",
+      );
     } finally {
       setLookingUp(false);
     }
@@ -315,33 +343,31 @@ export function SubscriptionForm({
                   }
                 />
               </View>
-              {docType === "dni" && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Buscar DNI"
-                  disabled={!fullDni || lookingUp}
-                  onPress={() => void searchDni()}
-                  style={({ pressed }) => ({
-                    width: 44,
-                    height: 44,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: radius.md,
-                    backgroundColor: fullDni ? colors.brand : colors.surfaceAlt,
-                    opacity: pressed ? 0.8 : 1,
-                  })}
-                >
-                  {lookingUp ? (
-                    <ActivityIndicator color={colors.onBrand} />
-                  ) : (
-                    <Icon
-                      name="search"
-                      size={20}
-                      color={fullDni ? colors.onBrand : colors.textMuted}
-                    />
-                  )}
-                </Pressable>
-              )}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Buscar ${docType.toUpperCase()}`}
+                disabled={!fullDoc || lookingUp}
+                onPress={() => void searchDocument()}
+                style={({ pressed }) => ({
+                  width: 44,
+                  height: 44,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: radius.md,
+                  backgroundColor: fullDoc ? colors.brand : colors.surfaceAlt,
+                  opacity: pressed ? 0.8 : 1,
+                })}
+              >
+                {lookingUp ? (
+                  <ActivityIndicator color={colors.onBrand} />
+                ) : (
+                  <Icon
+                    name="search"
+                    size={20}
+                    color={fullDoc ? colors.onBrand : colors.textMuted}
+                  />
+                )}
+              </Pressable>
             </View>
           </Field>
           <Input
@@ -525,6 +551,23 @@ export function SubscriptionForm({
         onPress={submit}
       />
 
+      <ConfirmDialog
+        visible={!!existing}
+        title="Ya es miembro de tu gimnasio"
+        message={
+          existing
+            ? `${existing.full_name} ya tiene una ficha con el ${existing.document_type.toUpperCase()} ${existing.document_number}. Para darle una nueva membresía, abre su ficha y usa «Renovar».`
+            : undefined
+        }
+        confirmLabel="Abrir su ficha"
+        onCancel={() => setExisting(null)}
+        onConfirm={() => {
+          const id = existing?.id;
+          setExisting(null);
+          if (id) router.replace({ pathname: "/members/[id]", params: { id } });
+        }}
+      />
+
       <BottomSheet
         visible={!!sale}
         onClose={finish}
@@ -551,7 +594,13 @@ export function SubscriptionForm({
               {sale.receipt.number}
             </Text>
             {proofNote && (
-              <Text tone={proofNote.startsWith("No") || /no se subieron/.test(proofNote) ? "danger" : "success"}>
+              <Text
+                tone={
+                  proofNote.startsWith("No") || /no se subieron/.test(proofNote)
+                    ? "danger"
+                    : "success"
+                }
+              >
                 {proofNote}
               </Text>
             )}
