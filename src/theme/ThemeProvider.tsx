@@ -1,26 +1,10 @@
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-import { useColorScheme } from "react-native";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 import { DEFAULT_BRAND, mix, normalizeHex, onColor } from "./color";
-import {
-  darkPalette,
-  lightPalette,
-  radius,
-  spacing,
-  typography,
-  type Palette,
-} from "./tokens";
+import { lightPalette, radius, spacing, typography, type Palette } from "./tokens";
 
-export type SchemePreference = "system" | "light" | "dark";
-
+/** One light theme for everyone, tinted with the gym's brand colour. There is no dark mode on purpose. */
 export interface Theme {
-  scheme: "light" | "dark";
   colors: Palette & {
     brand: string;
     onBrand: string;
@@ -33,13 +17,7 @@ export interface Theme {
   typography: typeof typography;
 }
 
-interface ThemeContextValue {
-  theme: Theme;
-  preference: SchemePreference;
-  setPreference: (p: SchemePreference) => void;
-}
-
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+const ThemeContext = createContext<Theme | null>(null);
 
 /** `brandColor` comes from the active gym (`brand_color`, #rrggbb). */
 export function ThemeProvider({
@@ -49,70 +27,31 @@ export function ThemeProvider({
   brandColor?: string | null;
   children: ReactNode;
 }) {
-  const system = useColorScheme();
-  const [preference, setPreference] = useState<SchemePreference>("system");
-  const scheme: "light" | "dark" =
-    preference === "system"
-      ? system === "dark"
-        ? "dark"
-        : "light"
-      : preference;
-
-  const value = useMemo<ThemeContextValue>(() => {
-    const palette = scheme === "dark" ? darkPalette : lightPalette;
-    const base = normalizeHex(brandColor ?? DEFAULT_BRAND);
-    // On dark backgrounds lift dark brand colors a bit so buttons stay visible.
-    const brand = scheme === "dark" ? mix(base, "#ffffff", 0.5) : base;
-    const brandSoft = mix(
-      brand,
-      palette.surface,
-      scheme === "dark" ? 0.22 : 0.12,
-    );
+  const value = useMemo<Theme>(() => {
+    const palette = lightPalette;
+    const brand = normalizeHex(brandColor ?? DEFAULT_BRAND);
     return {
-      theme: {
-        scheme,
-        colors: {
-          ...palette,
-          background: mix(
-            base,
-            palette.background,
-            scheme === "dark" ? 0.09 : 0.035,
-          ),
-          surfaceAlt: mix(base, palette.surfaceAlt, 0.08),
-          border: mix(base, palette.border, 0.08),
-          brand,
-          onBrand: onColor(brand),
-          brandSoft,
-          onBrandSoft:
-            scheme === "dark"
-              ? mix(brand, "#ffffff", 0.7)
-              : mix(brand, "#000000", 0.8),
-        },
-        spacing,
-        radius,
-        typography,
+      colors: {
+        ...palette,
+        background: mix(brand, palette.background, 0.035),
+        surfaceAlt: mix(brand, palette.surfaceAlt, 0.08),
+        border: mix(brand, palette.border, 0.08),
+        brand,
+        onBrand: onColor(brand),
+        brandSoft: mix(brand, palette.surface, 0.12),
+        onBrandSoft: mix(brand, "#000000", 0.8),
       },
-      preference,
-      setPreference,
+      spacing,
+      radius,
+      typography,
     };
-  }, [scheme, brandColor, preference]);
+  }, [brandColor]);
 
-  return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-  );
-}
-
-function useThemeContext(): ThemeContextValue {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("ThemeProvider missing");
-  return ctx;
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme(): Theme {
-  return useThemeContext().theme;
-}
-
-export function useSchemePreference() {
-  const { preference, setPreference } = useThemeContext();
-  return { preference, setPreference };
+  const theme = useContext(ThemeContext);
+  if (!theme) throw new Error("ThemeProvider missing");
+  return theme;
 }

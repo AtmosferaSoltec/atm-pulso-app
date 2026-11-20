@@ -12,11 +12,11 @@ import {
 import { formatPhone, ROLE_LABEL } from "@/lib/format";
 import type { PreviewState, Scenario } from "@/services";
 import { useSession } from "@/state/session";
-import { useSchemePreference, useTheme } from "@/theme/ThemeProvider";
+import { appVersion } from "@/lib/version";
+import { useTheme } from "@/theme/ThemeProvider";
 
 export default function Profile() {
   const { user, lab, setLab, pending, signOut, visibility } = useSession();
-  const { preference, setPreference } = useSchemePreference();
   const { colors, radius } = useTheme();
   const [logout, setLogout] = useState(false);
   if (!user) return null;
@@ -36,18 +36,6 @@ export default function Profile() {
             </Text>
           )}
         </View>
-      </View>
-      <View style={{ gap: 6 }}>
-        <Text variant="label">Tema</Text>
-        <Chips
-          value={preference}
-          onChange={setPreference}
-          options={[
-            { value: "system", label: "Automático" },
-            { value: "light", label: "Claro" },
-            { value: "dark", label: "Oscuro" },
-          ]}
-        />
       </View>
       <Button
         title="Cerrar sesión"
@@ -103,6 +91,14 @@ export default function Profile() {
         }}
         onCancel={() => setLogout(false)}
       />
+      <Text
+        variant="caption"
+        tone="muted"
+        style={{ textAlign: "center" }}
+        accessibilityLabel={`Versión ${appVersion()}`}
+      >
+        Pulso · versión {appVersion()}
+      </Text>
     </Screen>
   );
 }

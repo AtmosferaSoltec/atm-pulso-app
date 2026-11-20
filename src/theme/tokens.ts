@@ -58,21 +58,3 @@ export const lightPalette: Palette = {
   infoSoft: "#dbeafe",
 };
 
-export const darkPalette: Palette = {
-  background: "#0b0e12",
-  surface: "#151a21",
-  surfaceAlt: "#1e252e",
-  border: "#2a323d",
-  text: "#f2f4f7",
-  textMuted: "#9aa4b2",
-  textInverse: "#0b0e12",
-  overlay: "rgba(0,0,0,0.6)",
-  success: "#4ade80",
-  successSoft: "#12301d",
-  warning: "#fbbf24",
-  warningSoft: "#3a2c0b",
-  danger: "#f87171",
-  dangerSoft: "#3b1414",
-  info: "#60a5fa",
-  infoSoft: "#12254a",
-};

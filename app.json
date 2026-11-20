@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "atmpulsoapp",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.atmosferast.pulso",
       "buildNumber": "2",
@@ -68,9 +68,6 @@
       }
     },
     "owner": "atmosfera-st",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
     "updates": {
       "url": "https://u.expo.dev/6a75a4e7-acdb-49c9-a3fe-cf9af3bd34f6"
     }

@@ -133,19 +133,29 @@ Sin teléfono: `npx expo start --web` y Chromium a 412 × 869. pulso-api y auth-
 
 Las URLs de producción viven en las variables de entorno de EAS (entornos `production` y `preview`), no en `eas.json` ni en `.env`: así el build y `eas update` usan las mismas.
 
+**Versiones** (`version` en `app.json`, MAYOR.MENOR.PARCHE). La versión que corre se ve en Perfil («Pulso · versión 1.0.3»).
+
+| Qué se publica | Cómo sube la versión | Ejemplo |
+|---|---|---|
+| Actualización OTA (`eas update`) | PARCHE | 1.1.2 → 1.1.3 |
+| Build a la tienda | MENOR, PARCHE a 0 | 1.1.2 → 1.2.0 |
+
+El runtime lo calcula `app.config.ts` como MAYOR.MENOR.0: una OTA llega a todos los builds de su versión menor y nunca a uno con otro código nativo.
+
 **Actualización OTA** (solo JS, estilos, textos, imágenes; llega al abrir la app, sin revisión de la tienda):
 
-```bash
-npx eas-cli@latest update --channel production --environment production --message "…"
-```
+1. Subir PARCHE en `app.json`.
+2. `npx eas-cli@latest update --channel production --environment production --message "…"`
 
 Para probar antes, publicar en `--channel preview --environment preview` y abrir el APK de preview.
 
 **Build a la tienda** (obligatorio si cambia algo nativo: un paquete con código nativo, `app.json` nativo — permisos, ícono, splash, plugins — o la versión del SDK):
 
-1. Subir `version` en `app.json` (1.0.0 → 1.1.0). `runtimeVersion` sigue a `version` (`policy: appVersion`): las actualizaciones solo llegan a los builds con la misma versión, así un JS nuevo nunca cae en un nativo viejo. Olvidarlo puede romper la app de quien la tenga instalada.
+1. Subir MENOR en `app.json` y poner PARCHE en 0. Olvidarlo puede mandar JS nuevo a un nativo viejo y romper la app de quien la tenga instalada.
 2. Subir `android.versionCode` e `ios.buildNumber` (Play y App Store no aceptan repetidos).
 3. `npx eas-cli@latest build --platform android --profile production --auto-submit` → track interno de Play con la llave guardada en EAS.
+
+**Tema:** uno solo, claro, teñido con el color del gimnasio. No hay modo oscuro a propósito.
 
 ## Referencias
 

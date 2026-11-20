@@ -3,7 +3,6 @@ import { Manrope_400Regular } from "@expo-google-fonts/manrope/400Regular";
 import { Manrope_500Medium } from "@expo-google-fonts/manrope/500Medium";
 import { Manrope_700Bold } from "@expo-google-fonts/manrope/700Bold";
 import {
-  DarkTheme,
   DefaultTheme,
   Stack,
   ThemeProvider as NavigationThemeProvider,
@@ -27,8 +26,8 @@ function Branded({ children }: { children: ReactNode }) {
 
 function Navigator() {
   const { user, booting, bootError, retryBoot } = useSession();
-  const { scheme, colors } = useTheme();
-  const base = scheme === "dark" ? DarkTheme : DefaultTheme;
+  const { colors } = useTheme();
+  const base = DefaultTheme;
   if (booting || bootError)
     return (
       <View
@@ -56,9 +55,9 @@ function Navigator() {
         },
       }}
     >
-      <StatusBar style={scheme === "dark" ? "light" : "dark"} />
-      {/* Follows the app theme (which can differ from the phone's); needs enforceContrast: false in app.json. */}
-      <NavigationBar style={scheme === "dark" ? "dark" : "light"} />
+      <StatusBar style="dark" />
+      {/* Dark buttons on the light app, even on phones in dark mode; needs enforceContrast: false in app.json. */}
+      <NavigationBar style="light" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={!user}>
           <Stack.Screen name="(auth)" />
