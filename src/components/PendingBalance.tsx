@@ -4,11 +4,17 @@ import { Pressable, View } from "react-native";
 
 import { usePendingSales } from "@/hooks/queries";
 import { formatMoney, formatShortDay, METHOD_LABEL, METHODS } from "@/lib/format";
-import { services } from "@/services";
+import { services, type ProofFile } from "@/services";
 import { useSession } from "@/state/session";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ApiError, PaymentMethod, ProductSale } from "@/types";
 
+import {
+  acceptsProof,
+  PaymentProof,
+  proofSummary,
+  uploadProofs,
+} from "./PaymentProof";
 import { BottomSheet, Button, Chips, Icon, Text } from "./ui";
 
 const detail = (sale: ProductSale) =>
@@ -25,6 +31,7 @@ export function PendingBalance({ memberId }: { memberId: string }) {
   const [open, setOpen] = useState(false);
   const [skipped, setSkipped] = useState<string[]>([]);
   const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [proofs, setProofs] = useState<ProofFile[]>([]);
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<ApiError | undefined>();
   const [collected, setCollected] = useState<string | undefined>();
@@ -56,7 +63,19 @@ export function PendingBalance({ memberId }: { memberId: string }) {
         id: attempt.current.id,
       });
       attempt.current = { signature: "", id: "" };
-      setCollected(`Cobrado ${formatMoney(result.amount)} · ${METHOD_LABEL[method]}`);
+      // The collection is saved; its optional photos go after it and never undo it.
+      const note =
+        acceptsProof(method) && proofs.length > 0
+          ? proofSummary(
+              proofs.length,
+              await uploadProofs({ kind: "collection", id: result.id }, proofs),
+            )
+          : null;
+      setProofs([]);
+      setCollected(
+        `Cobrado ${formatMoney(result.amount)} · ${METHOD_LABEL[method]}` +
+          (note ? `\n${note}` : ""),
+      );
       setOpen(false);
       setSkipped([]);
       invalidate();
@@ -189,6 +208,9 @@ export function PendingBalance({ memberId }: { memberId: string }) {
           value={method}
           onChange={setMethod}
         />
+        {acceptsProof(method) && (
+          <PaymentProof photos={proofs} onChange={setProofs} />
+        )}
         {failure && <Text tone="danger">{failure.message}</Text>}
         <Button
           title={`Cobrar ${formatMoney(amount)}`}

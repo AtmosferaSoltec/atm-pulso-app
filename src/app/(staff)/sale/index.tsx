@@ -40,7 +40,11 @@ export default function SaleCatalog() {
 
   useEffect(() => {
     if (!done) return;
-    const t = setTimeout(() => saleCart.clearDone(), 4000);
+    // A second line is a note about the proof photos: give it time to be read.
+    const t = setTimeout(
+      () => saleCart.clearDone(),
+      done.includes("\n") ? 8000 : 4000,
+    );
     return () => clearTimeout(t);
   }, [done]);
 

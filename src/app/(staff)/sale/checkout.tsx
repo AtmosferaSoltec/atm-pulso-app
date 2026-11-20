@@ -5,10 +5,16 @@ import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { MemberPicker } from "@/components/MemberPicker";
+import {
+  acceptsProof,
+  PaymentProof,
+  proofSummary,
+  uploadProofs,
+} from "@/components/PaymentProof";
 import { Button, Chips, Text } from "@/components/ui";
 import { useProducts } from "@/hooks/queries";
 import { formatMoney, METHOD_LABEL, METHODS } from "@/lib/format";
-import { services } from "@/services";
+import { services, type ProofFile } from "@/services";
 import { saleCart, useSaleCart } from "@/state/sale-cart";
 import { useSession } from "@/state/session";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -23,6 +29,7 @@ export default function SaleCheckout() {
   const { items, member } = useSaleCart();
   const [branchId, setBranchId] = useState(activeBranch?.id ?? "");
   const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [proofs, setProofs] = useState<ProofFile[]>([]);
   const [saving, setSaving] = useState<"paid" | "pending" | null>(null);
   const [failure, setFailure] = useState<ApiError | undefined>();
   // One id per attempt: retrying the very same sale never duplicates it; any change gets a new id.
@@ -58,11 +65,19 @@ export default function SaleCheckout() {
         ...body,
         id: attempt.current.id,
       });
+      // The sale is saved; its optional photos go after it and never undo it.
+      let note: string | null = null;
+      if (status === "paid" && acceptsProof(method) && proofs.length > 0)
+        note = proofSummary(
+          proofs.length,
+          await uploadProofs({ kind: "sale", id: sale.id }, proofs),
+        );
       // The next sale is usually for someone else: start clean.
       saleCart.finish(
-        status === "paid"
+        (status === "paid"
           ? `Venta cobrada · ${formatMoney(sale.total)} · ${METHOD_LABEL[method]}`
-          : `Pendiente de ${member?.full_name} · ${formatMoney(sale.total)}`,
+          : `Pendiente de ${member?.full_name} · ${formatMoney(sale.total)}`) +
+          (note ? `\n${note}` : ""),
       );
       invalidate();
       router.back();
@@ -106,6 +121,9 @@ export default function SaleCheckout() {
             onChange={setMethod}
           />
         </View>
+        {acceptsProof(method) && (
+          <PaymentProof photos={proofs} onChange={setProofs} />
+        )}
         <View style={{ gap: 6 }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Text variant="label" style={{ flex: 1 }}>

@@ -13,7 +13,7 @@ import type {
 } from "@/types";
 
 import type { GymOption, Services } from "../types";
-import { api } from "./http";
+import { api, uploadFile } from "./http";
 import * as tokens from "./tokens";
 
 const money = (value: string) => Number(value).toFixed(2);
@@ -208,6 +208,17 @@ export const realServices: Services = {
           { method: "POST", body: input },
         )
       ).data;
+    },
+  },
+  vouchers: {
+    async upload(owner, file) {
+      const path =
+        owner.kind === "receipt"
+          ? `/receipts/${owner.id}/vouchers`
+          : owner.kind === "sale"
+            ? `/sales/${owner.id}/vouchers`
+            : `/sales/collections/${owner.id}/vouchers`;
+      await uploadFile(path, file);
     },
   },
 };

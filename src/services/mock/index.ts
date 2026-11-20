@@ -437,4 +437,7 @@ export const mockServices: Services = {
         return record;
       }),
   },
+  vouchers: {
+    upload: () => delay(() => undefined),
+  },
 };

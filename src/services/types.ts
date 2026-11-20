@@ -85,6 +85,23 @@ export interface SalesService {
   collect(input: NewCollection): Promise<Collection>;
 }
 
+/** What a proof of payment belongs to: a membership payment, a sale paid on the spot, or a collection. */
+export interface ProofOwner {
+  kind: "receipt" | "sale" | "collection";
+  id: string;
+}
+
+/** A photo (JPEG) or PDF already on the device. */
+export interface ProofFile {
+  uri: string;
+  mimeType: string;
+}
+
+/** Optional proofs of payment (never for cash). Up to 5 per owner; uploaded files cannot be changed. */
+export interface VouchersService {
+  upload(owner: ProofOwner, file: ProofFile): Promise<void>;
+}
+
 /** Module `body_tracking`. Sensitive data: reads are audited by the server, so call only on demand. */
 export interface BodyService {
   /** Newest first. Never call from lists or in the background. */
@@ -112,5 +129,6 @@ export interface Services {
   members: MembersService;
   sales: SalesService;
   body: BodyService;
+  vouchers: VouchersService;
   lab?: MockLab;
 }

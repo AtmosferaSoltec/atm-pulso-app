@@ -167,6 +167,12 @@ Para probar antes, publicar en `--channel preview --environment preview` y abrir
 2. Subir `android.versionCode` e `ios.buildNumber` (Play y App Store no aceptan repetidos).
 3. `npx eas-cli@latest build --platform android --profile production --auto-submit` → track interno de Play con la llave guardada en EAS.
 
+**R8 / ProGuard (desde 1.1.0):** `expo-build-properties` activa `enableMinifyInReleaseBuilds` y `enableShrinkResourcesInReleaseBuilds`. El `.aab` ya lleva el mapping (`BUNDLE-METADATA/com.android.tools.build.obfuscation/proguard.map`) y los símbolos nativos, así que Play Console desofusca los fallos sin subir nada a mano. Si una librería nueva falla solo en release, se agrega su regla en `extraProguardRules` del mismo plugin.
+
+**Permisos Android:** solo `CAMERA` (foto del comprobante). La galería usa el selector de fotos del sistema, sin permisos; `READ_MEDIA_*`, `READ/WRITE_EXTERNAL_STORAGE` y `RECORD_AUDIO` están en `android.blockedPermissions` para que Play no pida la declaración de fotos y videos.
+
+**Probar un release en un celular sin tocar producción:** `EXPO_PUBLIC_PULSO_API_URL=http://localhost:3011/api/v1 npx expo prebuild -p android --clean`, agregar `android:usesCleartextTraffic="true"` al `<application>` del manifest generado (solo para esta prueba local), `cd android && ./gradlew :app:assembleRelease`, `adb reverse tcp:3011 tcp:3011 && adb reverse tcp:3130 tcp:3130` e instalar `app/build/outputs/apk/release/app-release.apk` (antes desinstalar la versión de Play: la firma es otra). Borrar `android/` al terminar.
+
 **Tema:** uno solo, claro, teñido con el color del gimnasio. No hay modo oscuro a propósito.
 
 ## Referencias

@@ -13,7 +13,7 @@ import {
   planLabel,
   todayLima,
 } from "@/lib/format";
-import { services } from "@/services";
+import { services, type ProofFile } from "@/services";
 import { useSession } from "@/state/session";
 import { useTheme } from "@/theme/ThemeProvider";
 import type {
@@ -27,6 +27,12 @@ import type {
 } from "@/types";
 
 import { DateField } from "./DateField";
+import {
+  acceptsProof,
+  PaymentProof,
+  proofSummary,
+  uploadProofs,
+} from "./PaymentProof";
 import { BottomSheet, Button, Chips, Icon, Input, Screen, Text } from "./ui";
 
 function Field({
@@ -136,6 +142,8 @@ export function SubscriptionForm({
     subscription?.amount ?? priceFor(Number(initialMonths)),
   );
   const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [proofs, setProofs] = useState<ProofFile[]>([]);
+  const [proofNote, setProofNote] = useState<string | null>(null);
   const [branch, setBranch] = useState(activeBranch?.id ?? "");
   const [attempted, setAttempted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -237,6 +245,14 @@ export function SubscriptionForm({
           full_name: name.trim().replace(/\s+/g, " "),
           phone,
         });
+      // The payment is saved; its optional photos go after it and never undo it.
+      if (!edit && acceptsProof(method) && proofs.length > 0) {
+        const failed = await uploadProofs(
+          { kind: "receipt", id: result.receipt.id },
+          proofs,
+        );
+        setProofNote(proofSummary(proofs.length, failed));
+      }
       setSale(result);
     } catch (e) {
       setFailure(e as ApiError);
@@ -448,6 +464,10 @@ export function SubscriptionForm({
         </Field>
       )}
 
+      {!edit && acceptsProof(method) && (
+        <PaymentProof photos={proofs} onChange={setProofs} />
+      )}
+
       {visibility.showBranch && !edit && (
         <Field label="Sede">
           <Chips
@@ -532,6 +552,11 @@ export function SubscriptionForm({
               {formatDate(sale.membership.ends_on)} · Boleta{" "}
               {sale.receipt.number}
             </Text>
+            {proofNote && (
+              <Text tone={proofNote.startsWith("No") || /no se subieron/.test(proofNote) ? "danger" : "success"}>
+                {proofNote}
+              </Text>
+            )}
           </>
         )}
         <Button title={enroll ? "Ver ficha" : "Listo"} onPress={finish} />
