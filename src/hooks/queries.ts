@@ -146,6 +146,25 @@ export function useProductCategories() {
   return useAsync(() => services.sales.categories(), [gym]);
 }
 
+/**
+ * Members who owe (module `sales`), oldest debt first. One page of 100 is plenty for a front desk;
+ * `meta.total` feeds the «Deben» count. Pass `enabled: false` when the gym has no sales module.
+ */
+export function useDebtors(enabled: boolean) {
+  const { user, dataVersion } = useSession();
+  const gym = user?.gym.id ?? "";
+  return useAsync(
+    () =>
+      enabled
+        ? services.sales.debtors({ page: 1, page_size: 100 })
+        : Promise.resolve({
+            data: [],
+            meta: { page: 1, page_size: 100, total: 0 },
+          }),
+    [gym, enabled, dataVersion],
+  );
+}
+
 /** What a member owes (module `sales`). Reloads after any sale or collection. */
 export function usePendingSales(memberId: string) {
   const { user, dataVersion } = useSession();

@@ -1,6 +1,8 @@
 import type {
   BodyMeasurement,
   Collection,
+  Debtor,
+  Page,
   MemberList,
   MemberPending,
   Product,
@@ -183,6 +185,11 @@ export const realServices: Services = {
       return (
         await api<{ data: MemberPending }>(`/members/${memberId}/pending-sales`)
       ).data;
+    },
+    async debtors(query) {
+      return await api<Page<Debtor>>("/sales/debtors", {
+        query: { page: query?.page, page_size: query?.page_size },
+      });
     },
     async collect(input) {
       return (

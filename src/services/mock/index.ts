@@ -370,6 +370,41 @@ export const mockServices: Services = {
           sales: open,
         };
       }),
+    debtors: (query) =>
+      delay(() => {
+        requireFeature("sales");
+        const owing = new Map<string, ProductSale[]>();
+        for (const s of sales)
+          if (s.status === "pending" && s.member)
+            owing.set(s.member.id, [...(owing.get(s.member.id) ?? []), s]);
+        const rows = [...owing.values()]
+          .map((open) => {
+            const first = [...open].sort((a, b) =>
+              a.sold_at.localeCompare(b.sold_at),
+            )[0];
+            const member = store().find((m) => m.id === first.member!.id);
+            return {
+              member: {
+                id: first.member!.id,
+                full_name: first.member!.full_name,
+                document_type: member?.document_type ?? "dni",
+                document_number: first.member!.document_number,
+                phone: member?.phone ?? null,
+              },
+              balance: money(open.reduce((a, s) => a + Number(s.total), 0)),
+              pending_count: open.length,
+              oldest_sold_at: first.sold_at,
+              oldest_sold_on: first.sold_on,
+            };
+          })
+          .sort((a, b) => a.oldest_sold_at.localeCompare(b.oldest_sold_at));
+        const size = query?.page_size ?? 50;
+        const page = query?.page ?? 1;
+        return {
+          data: rows.slice((page - 1) * size, page * size),
+          meta: { page, page_size: size, total: rows.length },
+        };
+      }),
     collect: (input) =>
       delay(() => {
         requireFeature("sales");

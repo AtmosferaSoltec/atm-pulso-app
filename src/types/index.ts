@@ -263,6 +263,21 @@ export interface MemberPending {
   sales: ProductSale[];
 }
 
+/** A member with uncollected product sales (`GET /sales/debtors`), oldest debt first. */
+export interface Debtor {
+  member: {
+    id: Uuid;
+    full_name: string;
+    document_type: DocumentType;
+    document_number: string;
+    phone: string | null;
+  };
+  balance: Money;
+  pending_count: number;
+  oldest_sold_at: Timestamp;
+  oldest_sold_on: DateString;
+}
+
 export interface NewCollection {
   id?: Uuid;
   member_id: Uuid;

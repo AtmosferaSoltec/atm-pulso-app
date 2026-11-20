@@ -22,6 +22,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GymHeader, GymMark } from "@/components/GymHeader";
+import { DebtorRow } from "@/components/DebtorRow";
 import { MemberRow } from "@/components/MemberRow";
 import { SearchField } from "@/components/SearchField";
 import {
@@ -35,11 +36,14 @@ import {
 } from "@/components/ui";
 import { todayLong } from "@/lib/format";
 import { useSession } from "@/state/session";
-import { useMembers } from "@/hooks/queries";
+import { useDebtors, useMembers } from "@/hooks/queries";
 import { useTheme } from "@/theme/ThemeProvider";
-import type { MemberStatus, MemberView } from "@/types";
+import type { Debtor, MemberStatus, MemberView } from "@/types";
 
-type Filter = MemberStatus | "all";
+/** «debtors» is not a membership status: it lists who owes from pending product sales. */
+type Filter = MemberStatus | "all" | "debtors";
+type Row = MemberView | Debtor;
+const isDebtor = (row: Row): row is Debtor => "balance" in row;
 
 /** Height of the compact bar that replaces the canvas once it scrolls away. */
 const BAR = 56;
@@ -125,12 +129,28 @@ export default function Members() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const searching = search.trim().length > 0;
+  const sales = hasFeature("sales");
+  const showDebtors = sales && filter === "debtors" && !searching;
   // A search always looks across every status so nobody gets "lost" behind a filter.
-  const result = useMembers({ search, status: searching ? "all" : filter });
-  const counts = result.counts;
+  const members = useMembers({
+    search,
+    status: searching || filter === "debtors" ? "all" : filter,
+  });
+  const debtors = useDebtors(sales);
+  const result = showDebtors
+    ? {
+        items: debtors.data?.data ?? [],
+        loading: debtors.loading && !debtors.data,
+        error: debtors.error,
+        loadingMore: false,
+        loadMore: () => {},
+        refetch: debtors.refetch,
+      }
+    : members;
+  const counts = members.counts;
   const retry = result.refetch;
 
-  const listRef = useRef<FlatList<MemberView>>(null);
+  const listRef = useRef<FlatList<Row>>(null);
   const searchRef = useRef<ComponentRef<typeof TextInput>>(null);
   const scrollY = useSharedValue(0);
   // Where the compact bar takes over: the canvas bottom minus the bar. Measured once the canvas lays out.
@@ -239,6 +259,16 @@ export default function Members() {
                 count: counts?.expired,
                 tone: "danger",
               },
+              ...(sales
+                ? [
+                    {
+                      value: "debtors" as const,
+                      label: "Deben",
+                      count: debtors.data?.meta.total,
+                      tone: "warning" as const,
+                    },
+                  ]
+                : []),
               { value: "active", label: "Activos" },
               { value: "scheduled", label: "Programados" },
             ]}
@@ -254,14 +284,18 @@ export default function Members() {
           title={
             searching
               ? "Sin resultados"
-              : filter === "all"
+              : showDebtors
+                ? "Nadie debe"
+                : filter === "all"
                 ? "Aún no hay miembros"
                 : "Nadie en este filtro"
           }
           message={
             searching
               ? "Revisa el nombre o el número de documento."
-              : filter === "all"
+              : showDebtors
+                ? "No hay ventas pendientes por cobrar."
+                : filter === "all"
                 ? "Registra al primero con «Nuevo miembro»."
                 : undefined
           }
@@ -277,7 +311,7 @@ export default function Members() {
       {focused && <StatusBar style="light" />}
       <Animated.FlatList
         ref={listRef}
-        data={result.error || result.loading ? [] : result.items}
+        data={result.error || result.loading ? [] : (result.items as Row[])}
         onEndReached={result.loadMore}
         onEndReachedThreshold={0.4}
         ListFooterComponent={
@@ -285,21 +319,26 @@ export default function Members() {
             <SkeletonList variant="cards" rows={2} />
           ) : undefined
         }
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) =>
-          index < STAGGERED ? (
+        keyExtractor={(item) => (isDebtor(item) ? item.member.id : item.id)}
+        renderItem={({ item, index }) => {
+          const row = isDebtor(item) ? (
+            <DebtorRow debtor={item} />
+          ) : (
+            <MemberRow member={item} />
+          );
+          return index < STAGGERED ? (
             <Animated.View
               // A short, eased slide-in: no spring, so the cards never bounce.
               entering={FadeInDown.duration(260)
                 .delay(index * 35)
                 .easing(Easing.out(Easing.cubic))}
             >
-              <MemberRow member={item} />
+              {row}
             </Animated.View>
           ) : (
-            <MemberRow member={item} />
-          )
-        }
+            row
+          );
+        }}
         ListHeaderComponent={header}
         contentContainerStyle={{
           paddingHorizontal: 16,

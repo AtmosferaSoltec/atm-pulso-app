@@ -1,6 +1,7 @@
 import type {
   BodyMeasurement,
   Collection,
+  Debtor,
   EnrollMember,
   MemberDetail,
   MemberList,
@@ -10,6 +11,7 @@ import type {
   NewCollection,
   NewMeasurement,
   NewProductSale,
+  Page,
   PeriodChanges,
   Product,
   ProductCategory,
@@ -81,6 +83,8 @@ export interface SalesService {
   /** Paid now, or left pending for a member (`status: "pending"`). Idempotent by `id`. */
   sell(input: NewProductSale): Promise<ProductSale>;
   pending(memberId: string): Promise<MemberPending>;
+  /** Members who owe (pending sales), oldest debt first. */
+  debtors(query?: { page?: number; page_size?: number }): Promise<Page<Debtor>>;
   /** Whole pending sales only: all of them or none. Idempotent by `id`. */
   collect(input: NewCollection): Promise<Collection>;
 }

@@ -100,6 +100,15 @@ export function addMonths(date: string, months: number): string {
   return `${ny}-${String(nm + 1).padStart(2, "0")}-${String(Math.min(d, last)).padStart(2, "0")}`;
 }
 
+/** How long a debt has been open: "desde hoy", "desde ayer", "hace 5 días". */
+export function owedSince(soldOn: string): string {
+  const days = Math.round(
+    (Date.parse(todayLima()) - Date.parse(soldOn)) / 86_400_000,
+  );
+  if (days <= 0) return "desde hoy";
+  return days === 1 ? "desde ayer" : `hace ${days} días`;
+}
+
 export function todayLima(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(
     new Date(),
