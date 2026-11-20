@@ -4,6 +4,7 @@ import { router } from "expo-router";
 
 import { initials } from "@/lib/format";
 import { useSession } from "@/state/session";
+import { mix } from "@/theme/color";
 import { useTheme } from "@/theme/ThemeProvider";
 
 import { Avatar, BottomSheet, Icon, Text } from "./ui";
@@ -93,6 +94,7 @@ function OptionRow({
  * Gym and branch are only shown/selectable when the user has more than one.
  */
 export function GymHeader() {
+  const { colors } = useTheme();
   const {
     user,
     visibility,
@@ -169,7 +171,7 @@ export function GymHeader() {
         <Avatar
           name={user?.full_name ?? ""}
           size={38}
-          ring="rgba(255,255,255,0.4)"
+          ring={mix(colors.brandDeep, "#ffffff", 0.45)}
         />
       </Pressable>
       <BottomSheet

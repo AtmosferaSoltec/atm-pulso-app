@@ -63,13 +63,19 @@ export function Avatar({
     </View>
   );
   if (!ring) return face;
+  // Exact outer size and a half-size radius: Android draws a rounded border with an oversized radius (or a
+  // translucent colour) with square corners. `ring` should be an opaque colour for the same reason.
+  const outer = size + 8;
   return (
     <View
       style={{
-        padding: 2,
-        borderRadius: size,
+        width: outer,
+        height: outer,
+        borderRadius: outer / 2,
         borderWidth: 2,
         borderColor: ring,
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       {face}
