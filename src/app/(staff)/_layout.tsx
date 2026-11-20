@@ -15,6 +15,7 @@ export default function StaffLayout() {
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="profile" options={{ title: "Perfil" }} />
+      <Stack.Screen name="password" options={{ title: "Cambiar contraseña" }} />
       <Stack.Screen name="members/[id]/index" options={{ title: "" }} />
       <Stack.Screen
         name="members/[id]/subscription"

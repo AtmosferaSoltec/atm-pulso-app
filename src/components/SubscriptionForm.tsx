@@ -1,22 +1,21 @@
 import { randomUUID } from "expo-crypto";
 import { useEffect, useRef, useState } from "react";
-import { View } from "react-native";
+import { ActivityIndicator, Keyboard, Pressable, View } from "react-native";
 import { router, Stack } from "expo-router";
 
 import {
   addMonths,
   coverageEnd,
-  displayToIso,
   formatDate,
   formatMoney,
-  isoToDisplay,
-  maskDate,
   METHOD_LABEL,
+  METHODS,
   planLabel,
   todayLima,
 } from "@/lib/format";
 import { services } from "@/services";
 import { useSession } from "@/state/session";
+import { useTheme } from "@/theme/ThemeProvider";
 import type {
   ApiError,
   DocumentType,
@@ -27,10 +26,8 @@ import type {
   Sale,
 } from "@/types";
 
-import { BottomSheet, Button, Chips, Input, Screen, Text } from "./ui";
-
-const DURATIONS = ["1", "3", "6", "12"] as const;
-const METHODS: PaymentMethod[] = ["yape_plin", "cash", "card", "transfer"];
+import { DateField } from "./DateField";
+import { BottomSheet, Button, Chips, Icon, Input, Screen, Text } from "./ui";
 
 function Field({
   label,
@@ -62,6 +59,7 @@ export function SubscriptionForm({
   subscription?: MembershipView;
 }) {
   const { visibility, user, activeBranch, plans, invalidate } = useSession();
+  const { colors, radius } = useTheme();
   const enroll = !member;
   const edit = !!subscription;
   const today = todayLima();
@@ -88,6 +86,10 @@ export function SubscriptionForm({
       : null;
   const priceFor = (m: number, forPlan = plan) =>
     forPlan?.prices.find((p) => p.months === m)?.amount ?? "";
+  // The durations offered are the ones the gym priced on the web for this plan, plus «Otro».
+  const durations = [...new Set(plan?.prices.map((p) => p.months) ?? [])]
+    .sort((a, b) => a - b)
+    .map(String);
 
   const [docType, setDocType] = useState<DocumentType>("dni");
   const [doc, setDoc] = useState("");
@@ -95,6 +97,8 @@ export function SubscriptionForm({
   const [phone, setPhone] = useState("");
   // A full DNI fills the name from RENIEC; a name typed by hand is never overwritten.
   const [lookedUp, setLookedUp] = useState("");
+  // Bumped by the magnifier: searches the same DNI again.
+  const [searches, setSearches] = useState(0);
   const autoName = useRef("");
   const fullDni = enroll && docType === "dni" && /^\d{8}$/.test(doc);
   const lookingUp = fullDni && lookedUp !== doc;
@@ -114,12 +118,10 @@ export function SubscriptionForm({
     return () => {
       alive = false;
     };
-  }, [fullDni, doc]);
+  }, [fullDni, doc, searches]);
   const initialMonths = String(subscription?.months ?? 1);
   const [duration, setDuration] = useState<string>(
-    (DURATIONS as readonly string[]).includes(initialMonths)
-      ? initialMonths
-      : "other",
+    durations.includes(initialMonths) ? initialMonths : "other",
   );
   const [otherMonths, setOtherMonths] = useState(initialMonths);
   const [chosenStart, setStartChoice] = useState<
@@ -127,13 +129,13 @@ export function SubscriptionForm({
   >(edit ? "other" : continueOn ? "continue" : "today");
   const startChoice =
     chosenStart === "continue" && !continueOn ? "today" : chosenStart;
-  const [otherDate, setOtherDate] = useState(
-    subscription ? isoToDisplay(subscription.starts_on) : "",
+  const [otherDate, setOtherDate] = useState<string | null>(
+    subscription?.starts_on ?? null,
   );
   const [amount, setAmount] = useState(
     subscription?.amount ?? priceFor(Number(initialMonths)),
   );
-  const [method, setMethod] = useState<PaymentMethod>("yape_plin");
+  const [method, setMethod] = useState<PaymentMethod>("cash");
   const [branch, setBranch] = useState(activeBranch?.id ?? "");
   const [attempted, setAttempted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -150,7 +152,7 @@ export function SubscriptionForm({
       ? continueOn
       : startChoice === "today"
         ? today
-        : displayToIso(otherDate);
+        : otherDate;
   const end = start && validMonths ? addMonths(start, months) : null;
   const validDoc =
     docType === "dni" ? /^\d{8}$/.test(doc) : /^\d{9,12}$/.test(doc);
@@ -166,6 +168,8 @@ export function SubscriptionForm({
   const show = (ok: boolean) => attempted && !ok;
 
   const pickDuration = (value: string) => {
+    // «Otro» opens the keyboard by itself (autoFocus); a preset needs no typing.
+    if (value !== "other") Keyboard.dismiss();
     setDuration(value);
     const price = value === "other" ? "" : priceFor(Number(value));
     if (price && !edit) setAmount(price);
@@ -285,6 +289,8 @@ export function SubscriptionForm({
                   onChangeText={(v) => setDoc(v.replace(/\D/g, ""))}
                   maxLength={docType === "dni" ? 8 : 12}
                   style={{ minHeight: 44 }}
+                  returnKeyType="search"
+                  onSubmitEditing={() => setSearches((n) => n + 1)}
                   error={
                     show(validDoc)
                       ? docType === "dni"
@@ -294,6 +300,37 @@ export function SubscriptionForm({
                   }
                 />
               </View>
+              {docType === "dni" && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Buscar DNI"
+                  disabled={!fullDni || lookingUp}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setLookedUp("");
+                    setSearches((n) => n + 1);
+                  }}
+                  style={({ pressed }) => ({
+                    width: 44,
+                    height: 44,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: radius.md,
+                    backgroundColor: fullDni ? colors.brand : colors.surfaceAlt,
+                    opacity: pressed ? 0.8 : 1,
+                  })}
+                >
+                  {lookingUp ? (
+                    <ActivityIndicator color={colors.onBrand} />
+                  ) : (
+                    <Icon
+                      name="search"
+                      size={20}
+                      color={fullDni ? colors.onBrand : colors.textMuted}
+                    />
+                  )}
+                </Pressable>
+              )}
             </View>
           </Field>
           <Input
@@ -334,7 +371,7 @@ export function SubscriptionForm({
       <Field label="Duración">
         <Chips
           options={[
-            ...DURATIONS.map((n) => ({
+            ...durations.map((n) => ({
               value: n,
               label: planLabel(Number(n)),
             })),
@@ -345,6 +382,7 @@ export function SubscriptionForm({
         />
         {duration === "other" && (
           <Input
+            autoFocus
             accessibilityLabel="Meses"
             placeholder="Meses (1 a 24)"
             keyboardType="number-pad"
@@ -376,14 +414,11 @@ export function SubscriptionForm({
           />
         )}
         {startChoice === "other" && (
-          <Input
-            accessibilityLabel="Fecha de inicio"
-            placeholder="DD/MM/AAAA"
-            keyboardType="number-pad"
-            maxLength={10}
+          <DateField
+            label="Fecha de inicio"
             value={otherDate}
-            onChangeText={(v) => setOtherDate(maskDate(v))}
-            error={show(!!start) ? "Fecha no válida (DD/MM/AAAA)." : undefined}
+            onChange={setOtherDate}
+            error={show(!!start) ? "Elige la fecha de inicio." : undefined}
           />
         )}
         <Text variant="caption" tone="muted">
@@ -439,10 +474,8 @@ export function SubscriptionForm({
                 onPress={() => {
                   setStartChoice("other");
                   setOtherDate(
-                    isoToDisplay(
-                      (failure.details as { suggested_starts_on: string })
-                        .suggested_starts_on,
-                    ),
+                    (failure.details as { suggested_starts_on: string })
+                      .suggested_starts_on,
                   );
                   setFailure(undefined);
                 }}

@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { Linking, Pressable, View } from "react-native";
+import { router } from "expo-router";
 
 import {
   Avatar,
   Button,
   Chips,
   ConfirmDialog,
+  Icon,
+  type IconName,
   Screen,
   Text,
 } from "@/components/ui";
@@ -14,6 +17,46 @@ import type { PreviewState, Scenario } from "@/services";
 import { useSession } from "@/state/session";
 import { appVersion } from "@/lib/version";
 import { useTheme } from "@/theme/ThemeProvider";
+
+/** Atmósfera's support line, the same one published on atmosferast.com. */
+const SUPPORT_WHATSAPP = "51908069776";
+const PRIVACY_URL = "https://atmosferast.com/privacy";
+
+function Row({
+  icon,
+  label,
+  onPress,
+  external,
+}: {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  external?: boolean;
+}) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole={external ? "link" : "button"}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        minHeight: 52,
+        paddingHorizontal: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
+      })}
+    >
+      <Icon name={icon} size={20} color={colors.brand} />
+      <Text style={{ flex: 1 }}>{label}</Text>
+      <Icon
+        name={external ? "open-outline" : "chevron-forward"}
+        size={18}
+        color={colors.textMuted}
+      />
+    </Pressable>
+  );
+}
 
 export default function Profile() {
   const { user, lab, setLab, pending, signOut, visibility } = useSession();
@@ -36,6 +79,40 @@ export default function Profile() {
             </Text>
           )}
         </View>
+      </View>
+      <View
+        style={{
+          borderRadius: radius.lg,
+          borderWidth: 1,
+          borderColor: colors.border,
+          overflow: "hidden",
+        }}
+      >
+        <Row
+          icon="key-outline"
+          label="Cambiar contraseña"
+          onPress={() => router.push("/password")}
+        />
+        <View style={{ height: 1, backgroundColor: colors.border }} />
+        <Row
+          icon="logo-whatsapp"
+          label="Ayuda por WhatsApp"
+          external
+          onPress={() =>
+            void Linking.openURL(
+              `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(
+                `Hola, necesito ayuda con Pulso (${user.gym.name}).`,
+              )}`,
+            )
+          }
+        />
+        <View style={{ height: 1, backgroundColor: colors.border }} />
+        <Row
+          icon="shield-checkmark-outline"
+          label="Política de privacidad"
+          external
+          onPress={() => void Linking.openURL(PRIVACY_URL)}
+        />
       </View>
       <Button
         title="Cerrar sesión"

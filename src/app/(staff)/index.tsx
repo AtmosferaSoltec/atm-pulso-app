@@ -289,10 +289,10 @@ export default function Members() {
         renderItem={({ item, index }) =>
           index < STAGGERED ? (
             <Animated.View
-              entering={FadeInDown.duration(380)
-                .delay(index * 45)
-                .springify()
-                .damping(20)}
+              // A short, eased slide-in: no spring, so the cards never bounce.
+              entering={FadeInDown.duration(260)
+                .delay(index * 35)
+                .easing(Easing.out(Easing.cubic))}
             >
               <MemberRow member={item} />
             </Animated.View>

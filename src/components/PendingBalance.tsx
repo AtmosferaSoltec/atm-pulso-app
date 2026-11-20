@@ -5,7 +5,6 @@ import { Pressable, View } from "react-native";
 import { usePendingSales } from "@/hooks/queries";
 import { formatMoney, formatShortDay, METHOD_LABEL, METHODS } from "@/lib/format";
 import { services } from "@/services";
-import { getLastMethod, rememberMethod } from "@/state/last-method";
 import { useSession } from "@/state/session";
 import { useTheme } from "@/theme/ThemeProvider";
 import type { ApiError, PaymentMethod, ProductSale } from "@/types";
@@ -25,7 +24,7 @@ export function PendingBalance({ memberId }: { memberId: string }) {
   const pending = usePendingSales(memberId);
   const [open, setOpen] = useState(false);
   const [skipped, setSkipped] = useState<string[]>([]);
-  const [method, setMethod] = useState<PaymentMethod>(getLastMethod());
+  const [method, setMethod] = useState<PaymentMethod>("cash");
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<ApiError | undefined>();
   const [collected, setCollected] = useState<string | undefined>();
@@ -56,7 +55,6 @@ export function PendingBalance({ memberId }: { memberId: string }) {
         ...body,
         id: attempt.current.id,
       });
-      rememberMethod(method);
       attempt.current = { signature: "", id: "" };
       setCollected(`Cobrado ${formatMoney(result.amount)} · ${METHOD_LABEL[method]}`);
       setOpen(false);
@@ -114,7 +112,7 @@ export function PendingBalance({ memberId }: { memberId: string }) {
               title="Cobrar"
               fullWidth={false}
               onPress={() => {
-                setMethod(getLastMethod());
+                setMethod("cash");
                 setFailure(undefined);
                 setCollected(undefined);
                 setOpen(true);

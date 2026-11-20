@@ -9,7 +9,6 @@ import { Button, Chips, Text } from "@/components/ui";
 import { useProducts } from "@/hooks/queries";
 import { formatMoney, METHOD_LABEL, METHODS } from "@/lib/format";
 import { services } from "@/services";
-import { getLastMethod, rememberMethod } from "@/state/last-method";
 import { saleCart, useSaleCart } from "@/state/sale-cart";
 import { useSession } from "@/state/session";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -23,7 +22,7 @@ export default function SaleCheckout() {
   const products = useProducts();
   const { items, member } = useSaleCart();
   const [branchId, setBranchId] = useState(activeBranch?.id ?? "");
-  const [method, setMethod] = useState<PaymentMethod>(getLastMethod());
+  const [method, setMethod] = useState<PaymentMethod>("cash");
   const [saving, setSaving] = useState<"paid" | "pending" | null>(null);
   const [failure, setFailure] = useState<ApiError | undefined>();
   // One id per attempt: retrying the very same sale never duplicates it; any change gets a new id.
@@ -59,7 +58,6 @@ export default function SaleCheckout() {
         ...body,
         id: attempt.current.id,
       });
-      if (status === "paid") rememberMethod(method);
       // The next sale is usually for someone else: start clean.
       saleCart.finish(
         status === "paid"
