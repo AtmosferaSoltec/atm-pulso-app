@@ -9,16 +9,16 @@ import type { PaymentMethod } from "@/types";
 
 import { Icon, Text } from "./ui";
 
-/** The server keeps at most 5 proofs per payment. */
-const MAX_PROOFS = 5;
-/** Long side of the photo sent: sharp enough to read an operation number, small enough to upload fast. */
-const MAX_SIDE = 1600;
+/** One proof per payment (the server refuses a second one): one photo covers the whole sale. */
+const MAX_PROOFS = 1;
+/** Long side of the photo sent: still sharp enough to read an operation number, ~150–250 KB as JPEG. */
+const MAX_SIDE = 1280;
 
 /** Proofs only make sense for money that leaves a trace: never for cash. */
 export const acceptsProof = (method: PaymentMethod | null | undefined) =>
   !!method && method !== "cash";
 
-/** Shrinks a camera/gallery photo to a JPEG under ~1 MB before it is kept for upload. */
+/** Shrinks a camera/gallery photo to a small JPEG before it is kept for upload (storage is paid per byte). */
 async function shrink(asset: ImagePicker.ImagePickerAsset): Promise<ProofFile> {
   const context = ImageManipulator.manipulate(asset.uri);
   const landscape = (asset.width ?? 0) >= (asset.height ?? 0);
@@ -32,7 +32,7 @@ async function shrink(asset: ImagePicker.ImagePickerAsset): Promise<ProofFile> {
   const image = await context.renderAsync();
   const saved = await image.saveAsync({
     format: SaveFormat.JPEG,
-    compress: 0.7,
+    compress: 0.6,
   });
   return { uri: saved.uri, mimeType: "image/jpeg" };
 }
@@ -59,11 +59,9 @@ export async function uploadProofs(
 /** One line for the success sheet, or null when there was nothing to upload. */
 export function proofSummary(sent: number, failed: number): string | null {
   if (sent === 0) return null;
-  if (failed === 0)
-    return sent === 1 ? "Comprobante guardado." : `${sent} comprobantes guardados.`;
-  return failed === sent
-    ? "No se pudo subir el comprobante. Puedes adjuntarlo desde la web."
-    : `${failed} de ${sent} comprobantes no se subieron. Puedes adjuntarlos desde la web.`;
+  return failed === 0
+    ? "Comprobante guardado."
+    : "No se pudo subir el comprobante. Puedes adjuntarlo desde la web.";
 }
 
 /**
